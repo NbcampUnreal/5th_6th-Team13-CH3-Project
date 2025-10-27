@@ -58,10 +58,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Feedback")
 	void BP_OnHitFeedback(float Impact, FVector KnockDirection, FVector HitLocation);
 
-	// 사망 시 충격 방향으로 레그돌 처리(외부에서 HP 0 처리 후 호출)
-	UFUNCTION(BlueprintCallable, Category = "Monster|Feedback")
-	void PlayDeathRagdollThrow(const FVector& KnockDirection, float Impact, const FVector& HitLocation);
-protected:
+
+	
 	virtual void BeginPlay() override;
 
 	//실재 크기 변환 함수
@@ -70,12 +68,11 @@ protected:
 	// 피드백 계산/적용
 	void ApplyCollisionFeedback(AActor* Other, const FHitResult& Hit);
 
-	// 넉백(살아있는 상태)
-	void ApplyAliveKnockback(const FVector& KnockDir, float Impact);
+	
 
 	// 레그돌 전환 및 던지기(사망 상태)
 	void EnterRagdoll();
-	void ThrowRagdoll(const FVector& KnockDir, float Impact);
+	
 	void DisableCapsuleForRagdoll();
 
 	// 히트스톱

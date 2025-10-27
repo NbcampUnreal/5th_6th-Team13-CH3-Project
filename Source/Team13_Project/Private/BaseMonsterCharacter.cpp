@@ -131,17 +131,7 @@ void ABaseMonsterCharacter::ApplyCollisionFeedback(AActor* Other, const FHitResu
 
 	const float ImpactClamped = FMath::Clamp(RawImpact, 250.f, 1200.f);
 
-	//// 2) 충격 방향(상대에서 멀어지는 방향 + 히트 노멀 반대 평균)
-	//const FVector AwayDir = (GetActorLocation() - Other->GetActorLocation()).GetSafeNormal();
-	//const FVector HitAwayDir = (-Hit.ImpactNormal).GetSafeNormal();
-	//const FVector KnockDir = (AwayDir + HitAwayDir).GetSafeNormal();
 
-	//// 3) 접근 속도 성분(음수면 0)
-	//const float ApproachSpeed = FMath::Max(0.f, FVector::DotProduct(RelVel, KnockDir));
-
-	//// 4) 충격량 = 상대 속도 × 상대 크기
-	//const float OtherSize = GetActorSizeScaleSafe(Other);
-	//const float Impact = ApproachSpeed * OtherSize;
 
 
 	if (bEnableHitStop)
@@ -185,34 +175,51 @@ void ABaseMonsterCharacter::ApplyCollisionFeedback(AActor* Other, const FHitResu
 	}
 
 	BP_OnHitFeedback(ImpactClamped, KnockDir, Hit.ImpactPoint);
-	//// 5) 살아있으면 넉백, 죽었으면 레그돌로 던지기
-	//if (!IsDead())
-	//{
-	//	ApplyAliveKnockback(KnockDir, Impact);
-	//}
-	//else
-	//{
-	//	PlayDeathRagdollThrow(KnockDir, Impact, Hit.ImpactPoint);
-	//}
 
-	//// 6) BP 훅
-	//BP_OnHitFeedback(Impact, KnockDir, Hit.ImpactPoint);
-}
-void ABaseMonsterCharacter::ApplyAliveKnockback(const FVector& KnockDir, float Impact)
-{
-	// 살아있을 때는 LaunchCharacter로 간단 넉백
-	LaunchCharacter(KnockDir * Impact * KnockbackScalar, true, true);
 }
 
-void ABaseMonsterCharacter::PlayDeathRagdollThrow(const FVector& KnockDir, float Impact, const FVector& HitLocation)
-{
-	// 이미 죽어있는 상태라면 레그돌로 전환되어 있어야 함. 아니면 전환 후 던지기.
-	if (!GetMesh() || GetMesh()->IsSimulatingPhysics() == false)
-	{
-		EnterRagdoll();
-	}
-	ThrowRagdoll(KnockDir, Impact);
-}
+//안밀림
+//void ABaseMonsterCharacter::ApplyCollisionFeedback(AActor* Other, const FHitResult& Hit)
+//{
+//	if (!Other) return;
+//
+//	// 1) 상대 속도와 크기
+//	const FVector SelfVel = GetVelocity();
+//	const FVector OtherVel = GetActorVelocitySafe(Other);
+//	const FVector RelVel = OtherVel - SelfVel;
+//
+//	// 2) 충격 방향(상대에서 멀어지는 방향 + 히트 노멀 반대 평균)
+//	const FVector AwayDir = (GetActorLocation() - Other->GetActorLocation()).GetSafeNormal();
+//	const FVector HitAwayDir = (-Hit.ImpactNormal).GetSafeNormal();
+//	const FVector KnockDir = (AwayDir + HitAwayDir).GetSafeNormal();
+//
+//	// 3) 접근 속도 성분(음수면 0)
+//	const float ApproachSpeed = FMath::Max(0.f, FVector::DotProduct(RelVel, KnockDir));
+//
+//	// 4) 충격량 = 상대 속도 × 상대 크기
+//	const float OtherSize = GetActorSizeScaleSafe(Other);
+//	const float Impact = ApproachSpeed * OtherSize;
+//
+//
+//
+//	// 6) 살아있으면 넉백, 죽었으면 레그돌로 던지기
+//	if (!IsDead())
+//	{
+//		ApplyAliveKnockback(KnockDir, Impact);
+//	}
+//	else
+//	{
+//		PlayDeathRagdollThrow(KnockDir, Impact, Hit.ImpactPoint);
+//	}
+//
+//	// 7) BP 훅
+//	BP_OnHitFeedback(Impact, KnockDir, Hit.ImpactPoint);
+//}
+
+
+
+
+
 
 void ABaseMonsterCharacter::EnterRagdoll()
 {
@@ -235,13 +242,6 @@ void ABaseMonsterCharacter::EnterRagdoll()
 	DisableCapsuleForRagdoll();
 }
 
-void ABaseMonsterCharacter::ThrowRagdoll(const FVector& KnockDir, float Impact)
-{
-	if (USkeletalMeshComponent* MeshComp = GetMesh())
-	{
-		MeshComp->AddImpulse(KnockDir * Impact * RagdollImpulseScalar, NAME_None, true);
-	}
-}
 
 void ABaseMonsterCharacter::DisableCapsuleForRagdoll()
 {
