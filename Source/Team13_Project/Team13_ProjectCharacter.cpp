@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Team13_ProjectCharacter.h"
+#include "Perception/AISense_Sight.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -52,10 +53,25 @@ ATeam13_ProjectCharacter::ATeam13_ProjectCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
 }
 
 //////////////////////////////////////////////////////////////////////////
 // Input
+
+void ATeam13_ProjectCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+    
+	if (StimuliSource)
+	{
+		StimuliSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
+		StimuliSource->RegisterWithPerceptionSystem();
+	}
+}
+
+
 
 void ATeam13_ProjectCharacter::NotifyControllerChanged()
 {
