@@ -2,8 +2,9 @@
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextBlock.h"
+#include "Components/Button.h"
 
-ATeam13_PlayerController::ATeam13_PlayerController() 
+ATeam13_PlayerController::ATeam13_PlayerController()
 	: HUDWidgetClass(nullptr),
 	HUDWidgetInstance(nullptr),
 	MainMenuWidgetClass(nullptr),
@@ -11,7 +12,11 @@ ATeam13_PlayerController::ATeam13_PlayerController()
 	GuideWidgetClass(nullptr),
 	GuideWidgetInstance(nullptr),
 	SettingWidgetClass(nullptr),
-	SettingWidgetInstance(nullptr)
+	SettingWidgetInstance(nullptr),
+	EndWidgetClass(nullptr),
+	EndWidgetInstance(nullptr),
+	CreditWidgetClass(nullptr),
+	CreditWidgetInstance(nullptr)
 {
 }
 
@@ -40,8 +45,8 @@ void ATeam13_PlayerController::ShowStartMenu()
 		if (MainMenuWidgetInstance)
 		{
 			MainMenuWidgetInstance->AddToViewport();
-			bShowMouseCursor = true;			//마우스 커서작동
-			SetInputMode(FInputModeUIOnly());	//UI만 영향을 줌
+			bShowMouseCursor = true;			//마우스 커서O
+			SetInputMode(FInputModeUIOnly());
 		}
 	}
 
@@ -85,8 +90,8 @@ void ATeam13_PlayerController::ShowGuideMenu()
 		if (GuideWidgetInstance)
 		{
 			GuideWidgetInstance->AddToViewport();
-			bShowMouseCursor = true;			//마우스 커서작동
-			SetInputMode(FInputModeUIOnly());	//UI만 영향을 줌
+			bShowMouseCursor = true;			//마우스 커서O
+			SetInputMode(FInputModeUIOnly());
 		}
 	}
 
@@ -118,8 +123,8 @@ void ATeam13_PlayerController::ShowSettingMenu()
 		if (SettingWidgetInstance)
 		{
 			SettingWidgetInstance->AddToViewport();
-			bShowMouseCursor = true;			//마우스 커서작동
-			SetInputMode(FInputModeUIOnly());	//UI만 영향을 줌
+			bShowMouseCursor = true;			//마우스 커서O
+			SetInputMode(FInputModeUIOnly());
 		}
 	}
 
@@ -134,13 +139,120 @@ void ATeam13_PlayerController::ShowSettingMenu()
 	}
 }
 
+//엔딩메뉴
+//게임이 끝날 때 호출해서 사용
+void ATeam13_PlayerController::ShowEndMenu(bool bIsReStart)
+{
+	WidgetRemove();
+
+	//엔드메뉴 생성
+	if (EndWidgetClass)
+	{
+		EndWidgetInstance = CreateWidget<UUserWidget>(this, EndWidgetClass);
+		if (EndWidgetInstance)
+		{
+			EndWidgetInstance->AddToViewport();
+			bShowMouseCursor = true;			//마우스 커서O
+			SetInputMode(FInputModeUIOnly());
+		}
+	}
+
+	if (EndWidgetInstance)
+	{
+		//Quit버튼 Text
+		if (UTextBlock* QuitButton = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName(TEXT("QuitButtonText"))))
+		{
+			QuitButton->SetText(FText::FromString(TEXT("Quit")));
+		}
+
+		//Main Menu버튼 Text
+		if (UTextBlock* ReStartButton = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName(TEXT("ReStartButtonText"))))
+		{
+			ReStartButton->SetText(FText::FromString(TEXT("Main Menu")));
+		}
+
+		//Credit버튼 Text
+		if (UTextBlock* CreditButton = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName(TEXT("CreditButtonText"))))
+		{
+			CreditButton->SetText(FText::FromString(TEXT("Credit")));
+		}
+
+		//Result Text (true or false)
+		if (UTextBlock* ResultText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName(TEXT("ResultText"))))
+		{
+			ResultText->SetText(FText::FromString(bIsReStart ? TEXT("Loser") : TEXT("Winner")));
+		}
+
+		//게임종료시 나오는 정보
+		UFunction* PlayAnimFunc = EndWidgetInstance->FindFunction(FName("PlayGameOverAnim"));
+		if (PlayAnimFunc)
+		{
+			EndWidgetInstance->ProcessEvent(PlayAnimFunc, nullptr);
+		}
+
+		//스코어 text
+		//if (UTextBlock* TotalScoreText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("ScoreText")))
+		//{
+		//	if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
+		//	{
+		//		TotalScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score : %d"), GameInstance->TotalScore)));
+		//	}
+		//}
+
+		////레벨 text
+		//if (UTextBlock* TotalLevelText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("LevelText")))
+		//{
+		//	if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
+		//	{
+		//		TotalLevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), GameInstance->TotalLevel)));
+		//	}
+		//}
+
+		////킬 text
+		//if (UTextBlock* TotalKillText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("Killtext")))
+		//{
+		//	if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
+		//	{
+		//		TotalKillText->SetText(FText::FromString(FString::Printf(TEXT("Kill : %d"), GameInstance->TotalKill)));
+		//	}
+		//}
+
+
+	}
+}
+
+void ATeam13_PlayerController::ShowCreditMenu()
+{
+	WidgetRemove();
+
+	//크레딧메뉴 생성
+	if (CreditWidgetClass)
+	{
+		CreditWidgetInstance = CreateWidget<UUserWidget>(this, CreditWidgetClass);
+		if (CreditWidgetInstance)
+		{
+			CreditWidgetInstance->AddToViewport();
+			bShowMouseCursor = true;			//마우스 커서O
+			SetInputMode(FInputModeUIOnly());
+		}
+	}
+}
+
 //게임중 UI
 void ATeam13_PlayerController::ShowGameHUD()
 {
 	WidgetRemove();
 
-	//게임 HUD함수
-
+	if (HUDWidgetClass)
+	{
+		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+		if (HUDWidgetInstance)
+		{
+			HUDWidgetInstance->AddToViewport();
+			bShowMouseCursor = false;			//마우스 커서X
+			SetInputMode(FInputModeUIOnly());
+		}
+	}
 }
 
 //게임 종료
@@ -170,6 +282,7 @@ void ATeam13_PlayerController::WidgetRemove()
 		MainMenuWidgetInstance = nullptr;
 	}
 
+	//실행되는 가이드메뉴의 위젯이 있다면 제거
 	if (GuideWidgetInstance)
 	{
 		GuideWidgetInstance->RemoveFromParent();
@@ -181,5 +294,12 @@ void ATeam13_PlayerController::WidgetRemove()
 	{
 		SettingWidgetInstance->RemoveFromParent();
 		SettingWidgetInstance = nullptr;
+	}
+
+	//실행되는 엔드메뉴의 위젯이 있다면 제거
+	if (EndWidgetInstance)
+	{
+		EndWidgetInstance->RemoveFromParent();
+		EndWidgetInstance = nullptr;
 	}
 }

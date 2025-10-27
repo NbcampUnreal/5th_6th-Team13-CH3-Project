@@ -39,6 +39,18 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Menu")
 	UUserWidget* SettingWidgetInstance;
 
+	//¿£µù HUD
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu")
+	TSubclassOf<UUserWidget> EndWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Menu")
+	UUserWidget* EndWidgetInstance;
+
+	//Å©·¹µ÷ HUD
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu")
+	TSubclassOf<UUserWidget> CreditWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Menu")
+	UUserWidget* CreditWidgetInstance;
+
 	virtual void BeginPlay() override;
 
 	/*UFUNCTION(BlueprintPure, Category = "HUD")
@@ -51,6 +63,10 @@ public:
 	void ShowGuideMenu();
 	UFUNCTION(BlueprintCallable, Category = "Menu")
 	void ShowSettingMenu();
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	void ShowEndMenu(bool bIsReStart);
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	void ShowCreditMenu();
 	UFUNCTION(BlueprintCallable, Category = "Menu")
 	void QuitGame();
 
