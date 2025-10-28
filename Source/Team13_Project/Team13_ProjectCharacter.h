@@ -52,6 +52,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	UAIPerceptionStimuliSourceComponent* StimuliSource;
 

@@ -1,6 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Team13_ProjectCharacter.h"
+
+#include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AISense_Sight.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
@@ -70,7 +73,6 @@ void ATeam13_ProjectCharacter::BeginPlay()
 		StimuliSource->RegisterWithPerceptionSystem();
 	}
 }
-
 
 
 void ATeam13_ProjectCharacter::NotifyControllerChanged()
