@@ -1,4 +1,6 @@
 #include "Team13_PlayerController.h"
+#include "Team13_GameInstance.h"
+#include "Team13_GameState.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextBlock.h"
@@ -112,6 +114,7 @@ void ATeam13_PlayerController::ShowGuideMenu()
 	}
 }
 
+//셋팅메뉴
 void ATeam13_PlayerController::ShowSettingMenu()
 {
 	WidgetRemove();
@@ -183,44 +186,27 @@ void ATeam13_PlayerController::ShowEndMenu(bool bIsReStart)
 			ResultText->SetText(FText::FromString(bIsReStart ? TEXT("Loser") : TEXT("Winner")));
 		}
 
-		//게임종료시 나오는 정보
-		UFunction* PlayAnimFunc = EndWidgetInstance->FindFunction(FName("PlayGameOverAnim"));
-		if (PlayAnimFunc)
+		//레벨 text
+		if (UTextBlock* TotalLevelText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("LevelText")))
 		{
-			EndWidgetInstance->ProcessEvent(PlayAnimFunc, nullptr);
+			if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
+			{
+				TotalLevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), GameInstance->CurrentLevel)));
+			}
 		}
 
-		//스코어 text
-		//if (UTextBlock* TotalScoreText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("ScoreText")))
-		//{
-		//	if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
-		//	{
-		//		TotalScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score : %d"), GameInstance->TotalScore)));
-		//	}
-		//}
-
-		////레벨 text
-		//if (UTextBlock* TotalLevelText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("LevelText")))
-		//{
-		//	if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
-		//	{
-		//		TotalLevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), GameInstance->TotalLevel)));
-		//	}
-		//}
-
-		////킬 text
-		//if (UTextBlock* TotalKillText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("Killtext")))
-		//{
-		//	if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
-		//	{
-		//		TotalKillText->SetText(FText::FromString(FString::Printf(TEXT("Kill : %d"), GameInstance->TotalKill)));
-		//	}
-		//}
-
-
+		//킬 text
+		if (UTextBlock* TotalKillText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("KillText")))
+		{
+			if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
+			{
+				TotalKillText->SetText(FText::FromString(FString::Printf(TEXT("Kill : %d"), GameInstance->CurrentKill)));
+			}
+		}
 	}
 }
 
+//크레딧메뉴
 void ATeam13_PlayerController::ShowCreditMenu()
 {
 	WidgetRemove();
@@ -238,6 +224,11 @@ void ATeam13_PlayerController::ShowCreditMenu()
 	}
 }
 
+UUserWidget* ATeam13_PlayerController::GetHUDWidget() const
+{
+	return HUDWidgetInstance;
+}
+
 //게임중 UI
 void ATeam13_PlayerController::ShowGameHUD()
 {
@@ -251,8 +242,21 @@ void ATeam13_PlayerController::ShowGameHUD()
 			HUDWidgetInstance->AddToViewport();
 			bShowMouseCursor = false;			//마우스 커서X
 			SetInputMode(FInputModeUIOnly());
+
+			ATeam13_GameState* GameState = GetWorld() ? GetWorld()->GetGameState<ATeam13_GameState>() : nullptr;
+			if (GameState)
+			{
+				GameState->UpdateHUD();
+			}
 		}
 	}
+}
+
+//게임시작
+void ATeam13_PlayerController::StartGame()
+{
+	UGameplayStatics::OpenLevel(GetWorld(), FName("GameMenu"));
+	SetPause(false);
 }
 
 //게임 종료

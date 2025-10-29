@@ -53,8 +53,8 @@ public:
 
 	virtual void BeginPlay() override;
 
-	/*UFUNCTION(BlueprintPure, Category = "HUD")
-	UUserWidget* GetHudWidget() const;*/
+	UFUNCTION(BlueprintPure, Category = "HUD")
+	UUserWidget* GetHUDWidget() const;
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 	void ShowGameHUD();
 	UFUNCTION(BlueprintCallable, Category = "Menu")
@@ -63,10 +63,12 @@ public:
 	void ShowGuideMenu();
 	UFUNCTION(BlueprintCallable, Category = "Menu")
 	void ShowSettingMenu();
-	UFUNCTION(BlueprintCallable, Category = "HUD")
+	UFUNCTION(BlueprintCallable, Category = "Menu")
 	void ShowEndMenu(bool bIsReStart);
-	UFUNCTION(BlueprintCallable, Category = "HUD")
+	UFUNCTION(BlueprintCallable, Category = "Menu")
 	void ShowCreditMenu();
+	UFUNCTION(BlueprintCallable, Category = "Menu")
+	void StartGame();
 	UFUNCTION(BlueprintCallable, Category = "Menu")
 	void QuitGame();
 
