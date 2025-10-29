@@ -7,12 +7,11 @@
 #include "HitDamageable.generated.h"
 
 
-UINTERFACE(MinimalAPI)
+UINTERFACE(MinimalAPI, Blueprintable)
 class UHitDamageable : public UInterface
 {
 	GENERATED_BODY()
 };
-
 
 class TEAM13_PROJECT_API IHitDamageable
 {
@@ -21,14 +20,14 @@ class TEAM13_PROJECT_API IHitDamageable
 	
 public:
 	
-	virtual float GetCurrntHealth() const = 0;
+	virtual float GetCurrentHealth() const = 0;
 	virtual float GetMaxHealth() const = 0;
-	virtual void SetCurrntHealth(float NewValue) = 0;
+	virtual void SetCurrentHealth(float NewValue) = 0;
 
 	virtual int32 GetLevel() const = 0;
 	virtual float GetSizeScale() const = 0;
 	virtual float GetMaxSpeed() const = 0;
-	virtual float GetCurrntSpeed() const = 0;
+	virtual float GetCurrentSpeed() const = 0;
 
 	virtual bool IsDead() const = 0;
 	virtual void OnDead() = 0;
