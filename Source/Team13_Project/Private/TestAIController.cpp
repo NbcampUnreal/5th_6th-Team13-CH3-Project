@@ -14,8 +14,8 @@ ATestAIController::ATestAIController()
 	SetPerceptionComponent(*AIPerception);
 
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
-	SightConfig->SightRadius = 1500.0f;
-	SightConfig->LoseSightRadius = 1800.0f;
+	SightConfig->SightRadius = 500.0f;
+	SightConfig->LoseSightRadius = 600.0f;
 	SightConfig->PeripheralVisionAngleDegrees = 90.0f;
 	SightConfig->SetMaxAge(1.0f);
 
@@ -107,7 +107,7 @@ void ATestAIController::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		// 더 이상 보지 못함
 		BlackboardComp->SetValueAsBool(TEXT("CanSeeTarget"), false);
 		// 조사 모드 시작
-		BlackboardComp->SetValueAsVector(TEXT("TargetLastKnownLocation"), Actor->GetActorLocation());
+		//BlackboardComp->SetValueAsVector(TEXT("TargetLastKnownLocation"), Actor->GetActorLocation());
 		BlackboardComp->SetValueAsBool(TEXT("IsInvestigating"), true);
 		BlackboardComp->SetValueAsObject(TEXT("TargetActor"), nullptr);
 		UE_LOG(LogTemp, Warning, TEXT("[AI] Target Lost! %s"),
