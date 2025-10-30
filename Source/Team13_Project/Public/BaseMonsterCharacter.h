@@ -45,6 +45,8 @@ public:
     virtual void  OnDead() override;
     virtual void  EnableRagdollAndImpulse(const FVector& Impulse) override;
 
+    void SyncSizeToScale();
+
 
 protected:
     virtual void BeginPlay() override; 

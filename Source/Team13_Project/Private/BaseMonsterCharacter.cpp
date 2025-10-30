@@ -7,85 +7,128 @@
 
 void ABaseMonsterCharacter::BeginPlay()
 {
-    Super::BeginPlay();
+	Super::BeginPlay();
 
-    if (UCapsuleComponent* Capsule = GetCapsuleComponent())
-    {
-        Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-        Capsule->SetNotifyRigidBodyCollision(true);
-        Capsule->OnComponentHit.AddDynamic(this, &ABaseMonsterCharacter::OnCapsuleHit);
-    }
+	
+
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+	{
+		Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		Capsule->SetNotifyRigidBodyCollision(true);
+		Capsule->OnComponentHit.AddDynamic(this, &ABaseMonsterCharacter::OnCapsuleHit);
+	}
+
+	Tags.AddUnique(FName("Monster")); //태그 달기
 }
 
 ABaseMonsterCharacter::ABaseMonsterCharacter()
 {
-    PrimaryActorTick.bCanEverTick = false;
-    CombatComp = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComp"));
+	PrimaryActorTick.bCanEverTick = false;
+	CombatComp = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComp"));
+	
 }
 
 float ABaseMonsterCharacter::GetMaxSpeed() const
 {
-    if (const UCharacterMovementComponent* M = GetCharacterMovement())
-        return M->MaxWalkSpeed > 0.f ? M->MaxWalkSpeed : Speed;
-    return Speed;
+	if (const UCharacterMovementComponent* M = GetCharacterMovement())
+		return M->MaxWalkSpeed > 0.f ? M->MaxWalkSpeed : Speed;
+	return Speed;
 }
 
 void ABaseMonsterCharacter::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* Other, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-    if (!Other || !CombatComp) return;
+	if (!Other || !CombatComp) return;
 
-    TScriptInterface<IHitDamageable> Me(this);
-    TScriptInterface<IHitDamageable> Target(Other);
 
-    if (!Me || !Target) return;
+	if(Other->IsA(ABaseMonsterCharacter::StaticClass()) || Other->ActorHasTag(FName("Monster")))
+	{
+		
+		return;
+	}
 
-    const FRoleDecision R = CombatComp->DecideRoles(Me, Target, /*bIgnoreLevel=*/false);
+	TScriptInterface<IHitDamageable> Me(this);
+	TScriptInterface<IHitDamageable> Target(Other);
 
-    if (!R.bValid) return;
+	if (!Me || !Target) return;
 
-    // UObject* → AActor* 안전 캐스팅
-    AActor* AttackerActor = Cast<AActor>(R.Attacker.GetObject());
-    AActor* DefenderActor = Cast<AActor>(R.Defender.GetObject());
-    if (!AttackerActor || !DefenderActor) return;
+	const FRoleDecision R = CombatComp->DecideRoles(Me, Target, /*bIgnoreLevel=*/false);
 
-    FVector Dir = DefenderActor->GetActorLocation() - AttackerActor->GetActorLocation();
-    if (Dir.IsNearlyZero())
-    {
-        Dir = AttackerActor->GetActorForwardVector();
-    }
-    Dir = Dir.GetSafeNormal();
+	if (!R.bValid) return;
 
-    CombatComp->ApplyImpactDamage(R.Attacker, R.Defender, Dir);
+	// UObject* → AActor* 안전 캐스팅
+	AActor* AttackerActor = Cast<AActor>(R.Attacker.GetObject());
+	AActor* DefenderActor = Cast<AActor>(R.Defender.GetObject());
+	if (!AttackerActor || !DefenderActor) return;
 
-    
-    if (DefenderActor == this)
-    {
-        CombatComp->ApplyCollisionFeedbackForDefender(Me, AttackerActor, Hit);
-    }
+	FVector Dir = DefenderActor->GetActorLocation() - AttackerActor->GetActorLocation();
+	if (Dir.IsNearlyZero())
+	{
+		Dir = AttackerActor->GetActorForwardVector();
+	}
+	Dir = Dir.GetSafeNormal();
+
+	CombatComp->ApplyImpactDamage(R.Attacker, R.Defender, Dir);
+
+
+	if (DefenderActor == this)
+	{
+		CombatComp->ApplyCollisionFeedbackForDefender(Me, AttackerActor, Hit);
+	}
 }
 
 void ABaseMonsterCharacter::OnDead()
 {
-    if (UCharacterMovementComponent* M = GetCharacterMovement()) M->DisableMovement();
-    DetachFromControllerPendingDestroy();
+	if (UCharacterMovementComponent* M = GetCharacterMovement()) M->DisableMovement();
+	DetachFromControllerPendingDestroy();
 }
 
 void ABaseMonsterCharacter::EnableRagdollAndImpulse(const FVector& Impulse)
 {
-    if (USkeletalMeshComponent* MeshComp = GetMesh())
-    {
-        if (!MeshComp->IsSimulatingPhysics())
-        {
-            MeshComp->SetSimulatePhysics(true);
-            MeshComp->SetCollisionProfileName(TEXT("Ragdoll"));
-            if (UCapsuleComponent* Cap = GetCapsuleComponent()) Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        }
-        MeshComp->AddImpulse(Impulse, NAME_None, true);
-    }
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		if (!MeshComp->IsSimulatingPhysics())
+		{
+			MeshComp->SetSimulatePhysics(true);
+			MeshComp->SetCollisionProfileName(TEXT("Ragdoll"));
+			if (UCapsuleComponent* Cap = GetCapsuleComponent()) Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		MeshComp->AddImpulse(Impulse, NAME_None, true);
+	}
 }
 
 
+void ABaseMonsterCharacter::SyncSizeToScale()
+{
+	//스케일 크기 고정
+	SetActorScale3D(FVector(1.0f));
 
+	//캡슐의 크기
+	const float BaseRadius = 42.f;
+	const float BaseHalf = 96.f;
+
+
+	UCapsuleComponent* Capsule = GetCapsuleComponent();
+	if (!Capsule)
+	{
+		return;
+	}
+	//캡슐 크기 증가
+	Capsule->SetCapsuleSize(BaseRadius * SizeScale, BaseHalf * SizeScale, true);
+
+
+	if (USkeletalMeshComponent* mesh = GetMesh())
+	{
+		//메시 크기 증가
+		mesh->SetRelativeScale3D(FVector(SizeScale));
+
+		//발 높이 보정
+		const float NewHalf = BaseHalf * SizeScale;
+		mesh->SetRelativeLocation(FVector(0, 0, -NewHalf));
+
+	}
+
+
+}
 
 
 
@@ -167,38 +210,7 @@ void ABaseMonsterCharacter::EnableRagdollAndImpulse(const FVector& Impulse)
 //	}
 //}
 //
-//void ABaseMonsterCharacter::SyncSizeToScale()
-//{
-//	//스케일 크기 고정
-//	SetActorScale3D(FVector(1.0f));
-//
-//	//캡슐의 크기
-//	const float BaseRadius = 42.f;
-//	const float BaseHalf = 96.f;
-//
-//
-//	UCapsuleComponent* Capsule = GetCapsuleComponent();
-//	if (!Capsule)
-//	{
-//		return;
-//	}
-//	//캡슐 크기 증가
-//	Capsule->SetCapsuleSize(BaseRadius * SizeScale, BaseHalf * SizeScale, true);
-//
-//
-//	if (USkeletalMeshComponent* mesh = GetMesh())
-//	{
-//		//메시 크기 증가
-//		mesh->SetRelativeScale3D(FVector(SizeScale));
-//
-//		//발 높이 보정
-//		const float NewHalf = BaseHalf * SizeScale;
-//		mesh->SetRelativeLocation(FVector(0, 0, -NewHalf));
-//
-//	}
-//
-//
-//}
+
 
 //2중으로 커져서 이상해짐
 //void ABaseMonsterCharacter::SyncSizeToScale()
