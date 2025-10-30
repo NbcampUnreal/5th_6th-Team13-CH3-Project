@@ -40,9 +40,12 @@ public:
     virtual float GetMaxSpeed() const override;
     virtual float GetCurrentSpeed() const override { return GetVelocity().Size(); }
 
+<<<<<<< Updated upstream
     virtual bool  IsDead() const override { return CurrentHealth <= 0.f; }
     virtual void  OnDead() override;
     virtual void  EnableRagdollAndImpulse(const FVector& Impulse) override;
+=======
+>>>>>>> Stashed changes
 
 protected:
     virtual void BeginPlay() override; 
