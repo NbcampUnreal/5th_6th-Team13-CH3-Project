@@ -288,7 +288,7 @@ void ABaseMonsterCharacter::EnableRagdollAndImpulse(const FVector& Impulse)
 //
 //}
 
-<<<<<<< Updated upstream
+
 //안밀림
 //void ABaseMonsterCharacter::ApplyCollisionFeedback(AActor* Other, const FHitResult& Hit)
 //{
@@ -326,26 +326,26 @@ void ABaseMonsterCharacter::EnableRagdollAndImpulse(const FVector& Impulse)
 //	// 7) BP 훅
 //	BP_OnHitFeedback(Impact, KnockDir, Hit.ImpactPoint);
 //}
-=======
-void ABaseMonsterCharacter::ApplyCollisionFeedback(AActor* Other, const FHitResult& Hit)
-{
-	if (!Other) return;
 
-	if (!Other->ActorHasTag("Player")) return;
-
-	constexpr float UpRatio = 0.22f; // 대각선 상향 정도 
-	const FVector KnockDir = MakeBalloonBounceDir(Other, UpRatio);
-
-	// 1) 상대 속도와 크기
-	const FVector SelfVel = GetVelocity();
-	const FVector OtherVel = GetActorVelocitySafe(Other);
-	const FVector RelVel = OtherVel - SelfVel;
-	const float   ApproachSpeed = RelVel.Size(); // 복잡한 Dot 빼고 ‘체감 속도’로
-	const float   OtherSize = GetActorSizeScaleSafe(Other);
-	const float   RawImpact = ApproachSpeed * OtherSize;
-
-	const float ImpactClamped = FMath::Clamp(RawImpact, 250.f, 1200.f);
-
+//void ABaseMonsterCharacter::ApplyCollisionFeedback(AActor* Other, const FHitResult& Hit)
+//{
+//	if (!Other) return;
+//
+//	if (!Other->ActorHasTag("Player")) return;
+//
+//	constexpr float UpRatio = 0.22f; // 대각선 상향 정도 
+//	const FVector KnockDir = MakeBalloonBounceDir(Other, UpRatio);
+//
+//	// 1) 상대 속도와 크기
+//	const FVector SelfVel = GetVelocity();
+//	const FVector OtherVel = GetActorVelocitySafe(Other);
+//	const FVector RelVel = OtherVel - SelfVel;
+//	const float   ApproachSpeed = RelVel.Size(); // 복잡한 Dot 빼고 ‘체감 속도’로
+//	const float   OtherSize = GetActorSizeScaleSafe(Other);
+//	const float   RawImpact = ApproachSpeed * OtherSize;
+//
+//	const float ImpactClamped = FMath::Clamp(RawImpact, 250.f, 1200.f);
+//
 	//// 2) 충격 방향(상대에서 멀어지는 방향 + 히트 노멀 반대 평균)
 	//const FVector AwayDir = (GetActorLocation() - Other->GetActorLocation()).GetSafeNormal();
 	//const FVector HitAwayDir = (-Hit.ImpactNormal).GetSafeNormal();
@@ -357,36 +357,28 @@ void ABaseMonsterCharacter::ApplyCollisionFeedback(AActor* Other, const FHitResu
 	//// 4) 충격량 = 상대 속도 × 상대 크기
 	//const float OtherSize = GetActorSizeScaleSafe(Other);
 	//const float Impact = ApproachSpeed * OtherSize;
->>>>>>> Stashed changes
 
 
+	//	// 잠깐 미끄러지게 해서 착지/밀림 감 살리기
+	//	if (UCharacterMovementComponent* Move = GetCharacterMovement())
+	//	{
+	//		const float OldFric = Move->GroundFriction, OldBrake = Move->BrakingDecelerationWalking;
+	//		Move->GroundFriction = 0.6f; Move->BrakingDecelerationWalking = 120.f;
+	//		FTimerHandle Th;
+	//		GetWorldTimerManager().SetTimer(Th, [this, OldFric, OldBrake]()
+	//			{
+	//				if (UCharacterMovementComponent* M = GetCharacterMovement())
+	//				{
+	//					M->GroundFriction = OldFric; M->BrakingDecelerationWalking = OldBrake;
+	//				}
+	//			}, 0.18f, false);
+	//	}
+	//}
+	//else
+	//{
+	//	// 레그돌 던지기: 같은 방향으로
+	//	if (!GetMesh() || !GetMesh()->IsSimulatingPhysics()) EnterRagdoll();
 
-
-<<<<<<< Updated upstream
-=======
-		// 잠깐 미끄러지게 해서 착지/밀림 감 살리기
-		if (UCharacterMovementComponent* Move = GetCharacterMovement())
-		{
-			const float OldFric = Move->GroundFriction, OldBrake = Move->BrakingDecelerationWalking;
-			Move->GroundFriction = 0.6f; Move->BrakingDecelerationWalking = 120.f;
-			FTimerHandle Th;
-			GetWorldTimerManager().SetTimer(Th, [this, OldFric, OldBrake]()
-				{
-					if (UCharacterMovementComponent* M = GetCharacterMovement())
-					{
-						M->GroundFriction = OldFric; M->BrakingDecelerationWalking = OldBrake;
-					}
-				}, 0.18f, false);
-		}
-	}
-	else
-	{
-		// 레그돌 던지기: 같은 방향으로
-		if (!GetMesh() || !GetMesh()->IsSimulatingPhysics()) EnterRagdoll();
->>>>>>> Stashed changes
-
-
-<<<<<<< Updated upstream
 //void ABaseMonsterCharacter::EnterRagdoll()
 //{
 //	// 이동 정지 및 컨트롤러 분리
@@ -456,12 +448,11 @@ void ABaseMonsterCharacter::ApplyCollisionFeedback(AActor* Other, const FHitResu
 //{
 //	return Actor ? Actor->GetActorScale3D().GetMax() : 1.0f;
 //}
-=======
-		if (USkeletalMeshComponent* MeshComp = GetMesh())
-			MeshComp->AddImpulse(Dir * P, NAME_None, true);
-	}
+	//	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	//		MeshComp->AddImpulse(Dir * P, NAME_None, true);
+	//}
 
-	BP_OnHitFeedback(ImpactClamped, KnockDir, Hit.ImpactPoint);
+	//BP_OnHitFeedback(ImpactClamped, KnockDir, Hit.ImpactPoint);
 	//// 5) 살아있으면 넉백, 죽었으면 레그돌로 던지기
 	//if (!IsDead())
 	//{
@@ -474,92 +465,92 @@ void ABaseMonsterCharacter::ApplyCollisionFeedback(AActor* Other, const FHitResu
 
 	//// 6) BP 훅
 	//BP_OnHitFeedback(Impact, KnockDir, Hit.ImpactPoint);
-}
+//}
+//
+//void ABaseMonsterCharacter::PlayDeathRagdollThrow(const FVector& KnockDir, float Impact, const FVector& HitLocation)
+//{
+//	// 이미 죽어있는 상태라면 레그돌로 전환되어 있어야 함. 아니면 전환 후 던지기.
+//	if (!GetMesh() || GetMesh()->IsSimulatingPhysics() == false)
+//	{
+//		EnterRagdoll();
+//	}
+//	ThrowRagdoll(KnockDir, Impact);
+//}
+//
+//void ABaseMonsterCharacter::EnterRagdoll()
+//{
+//	// 이동 정지 및 컨트롤러 분리
+//	if (UCharacterMovementComponent* Move = GetCharacterMovement())
+//	{
+//		Move->DisableMovement();
+//	}
+//	DetachFromControllerPendingDestroy();
+//
+//	// 메시 물리 켜기
+//	if (USkeletalMeshComponent* MeshComp = GetMesh())
+//	{
+//		MeshComp->SetSimulatePhysics(true);
+//		MeshComp->SetCollisionProfileName(TEXT("Ragdoll"));
+//		MeshComp->WakeAllRigidBodies();
+//	}
+//
+//	// 캡슐 끄기
+//	DisableCapsuleForRagdoll();
+//}
+//
+//void ABaseMonsterCharacter::ThrowRagdoll(const FVector& KnockDir, float Impact)
+//{
+//	if (USkeletalMeshComponent* MeshComp = GetMesh())
+//	{
+//		MeshComp->AddImpulse(KnockDir * Impact * RagdollImpulseScalar, NAME_None, true);
+//	}
+//}
+//
+//void ABaseMonsterCharacter::DisableCapsuleForRagdoll()
+//{
+//	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+//	{
+//		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+//	}
+//}
+//
+//void ABaseMonsterCharacter::DoGlobalHitStop() const
+//{
+//	// 간단 전역 시간 감속 히트스톱
+//	if (UWorld* World = GetWorld())
+//	{
+//		UGameplayStatics::SetGlobalTimeDilation(World, GlobalTimeDilationDuringHitStop);
+//
+//		FTimerHandle Th;
+//		World->GetTimerManager().SetTimer(Th,
+//			[World]()
+//			{
+//				UGameplayStatics::SetGlobalTimeDilation(World, 1.0f);
+//			},
+//			HitStopDuration, false);
+//	}
+//}
+//
+//FVector ABaseMonsterCharacter::GetActorVelocitySafe(const AActor* Actor)
+//{
+//	if (!Actor) return FVector::ZeroVector;
+//
+//	if (const APawn* P = Cast<APawn>(Actor))
+//	{
+//		if (const UMovementComponent* Move = P->GetMovementComponent())
+//		{
+//			return Move->Velocity;
+//		}
+//	}
+//	if (const UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Actor->GetRootComponent()))
+//	{
+//		return Prim->GetComponentVelocity();
+//	}
+//	return FVector::ZeroVector;
+//}
+//
+//float ABaseMonsterCharacter::GetActorSizeScaleSafe(const AActor* Actor)
+//{
+//	return Actor ? Actor->GetActorScale3D().GetMax() : 1.0f;
+//}
 
-void ABaseMonsterCharacter::PlayDeathRagdollThrow(const FVector& KnockDir, float Impact, const FVector& HitLocation)
-{
-	// 이미 죽어있는 상태라면 레그돌로 전환되어 있어야 함. 아니면 전환 후 던지기.
-	if (!GetMesh() || GetMesh()->IsSimulatingPhysics() == false)
-	{
-		EnterRagdoll();
-	}
-	ThrowRagdoll(KnockDir, Impact);
-}
-
-void ABaseMonsterCharacter::EnterRagdoll()
-{
-	// 이동 정지 및 컨트롤러 분리
-	if (UCharacterMovementComponent* Move = GetCharacterMovement())
-	{
-		Move->DisableMovement();
-	}
-	DetachFromControllerPendingDestroy();
-
-	// 메시 물리 켜기
-	if (USkeletalMeshComponent* MeshComp = GetMesh())
-	{
-		MeshComp->SetSimulatePhysics(true);
-		MeshComp->SetCollisionProfileName(TEXT("Ragdoll"));
-		MeshComp->WakeAllRigidBodies();
-	}
-
-	// 캡슐 끄기
-	DisableCapsuleForRagdoll();
-}
-
-void ABaseMonsterCharacter::ThrowRagdoll(const FVector& KnockDir, float Impact)
-{
-	if (USkeletalMeshComponent* MeshComp = GetMesh())
-	{
-		MeshComp->AddImpulse(KnockDir * Impact * RagdollImpulseScalar, NAME_None, true);
-	}
-}
-
-void ABaseMonsterCharacter::DisableCapsuleForRagdoll()
-{
-	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
-	{
-		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-}
-
-void ABaseMonsterCharacter::DoGlobalHitStop() const
-{
-	// 간단 전역 시간 감속 히트스톱
-	if (UWorld* World = GetWorld())
-	{
-		UGameplayStatics::SetGlobalTimeDilation(World, GlobalTimeDilationDuringHitStop);
-
-		FTimerHandle Th;
-		World->GetTimerManager().SetTimer(Th,
-			[World]()
-			{
-				UGameplayStatics::SetGlobalTimeDilation(World, 1.0f);
-			},
-			HitStopDuration, false);
-	}
-}
-
-FVector ABaseMonsterCharacter::GetActorVelocitySafe(const AActor* Actor)
-{
-	if (!Actor) return FVector::ZeroVector;
-
-	if (const APawn* P = Cast<APawn>(Actor))
-	{
-		if (const UMovementComponent* Move = P->GetMovementComponent())
-		{
-			return Move->Velocity;
-		}
-	}
-	if (const UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Actor->GetRootComponent()))
-	{
-		return Prim->GetComponentVelocity();
-	}
-	return FVector::ZeroVector;
-}
-
-float ABaseMonsterCharacter::GetActorSizeScaleSafe(const AActor* Actor)
-{
-	return Actor ? Actor->GetActorScale3D().GetMax() : 1.0f;
-}
->>>>>>> Stashed changes
