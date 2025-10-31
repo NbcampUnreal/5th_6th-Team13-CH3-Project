@@ -151,10 +151,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
 	float MaxHP;
 
-	// 레벨당 MaxHP 증가량
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
-	float HPPerLevelGain;
-
 	/* ===========================
 	 *  스킬(대쉬) 관련
 	 * =========================== */

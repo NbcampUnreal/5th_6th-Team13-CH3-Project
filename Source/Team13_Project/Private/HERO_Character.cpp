@@ -65,9 +65,8 @@ AHERO_Character::AHERO_Character()
 	Weight = 10.0f;
 
 	// HP / 레벨업 관련
-	MaxHP = 100.0f;
+	MaxHP = 3.0f;
 	HP = MaxHP;
-	HPPerLevelGain = 20.0f;
 
 	// 스킬(대쉬) 관련
 	CurrentSkillState = ESkillState::Normal;
@@ -258,8 +257,7 @@ void AHERO_Character::LevelUpInternal()
 	// 레벨업에 따른 스텟 재계산
 	ApplyLevelStats();
 
-	// 레벨업에 따른 최댗력증가 및 체력 회복(체력회복 불필요시 HP = MaxHP; 삭제)
-	MaxHP += HPPerLevelGain;
+	// 레벨업에 따른 체력 회복
 	HP = MaxHP;
 
 	// 속도 오류 방지)
