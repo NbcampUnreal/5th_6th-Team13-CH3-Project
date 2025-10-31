@@ -2,10 +2,14 @@
 
 UTeam13_GameInstance::UTeam13_GameInstance()
 {
+	CurrentStageIndex = 0;
+
+	//임시
 	CurrentExp = 0;
 	MaxExp = 100;
 	CurrentLevel = 1;
 	CurrentKill = 0;
+
 }
 
 ////EXP를 얻고 100이 넘으면 Levelup

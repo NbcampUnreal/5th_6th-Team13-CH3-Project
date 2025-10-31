@@ -13,6 +13,10 @@ public:
 	UTeam13_GameInstance();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
+	int32 CurrentStageIndex;
+
+	//юс╫ц
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
 	int32 CurrentExp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
 	int32 MaxExp;
@@ -20,6 +24,8 @@ public:
 	int32 CurrentLevel;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
 	int32 CurrentKill;
+
+	
 
 	/*UFUNCTION(BlueprintCallable, Category = "GameData")
 	void AddToEXP(int32 Amount);

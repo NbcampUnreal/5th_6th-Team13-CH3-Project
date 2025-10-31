@@ -9,6 +9,9 @@
 
 ATeam13_GameState::ATeam13_GameState()
 {
+	StageDuration = 3.0f; //임시 3초
+	CurrentStageIndex = 0;
+	MaxStageIndex = 2;
 }
 
 void ATeam13_GameState::BeginPlay()
@@ -34,19 +37,100 @@ void ATeam13_GameState::BeginPlay()
 			}
 		}
 	}*/
-	UpdateHUD();
-	StartLevel();
+	StartStage();
+
+	GetWorldTimerManager().SetTimer(
+		HUDUpdateTimerHandle,
+		this,
+		&ATeam13_GameState::UpdateHUD,
+		0.1f,
+		true);
 }
 
-
-
-void ATeam13_GameState::StartLevel()
+void ATeam13_GameState::StartStage()
 {
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
 		{
 			Team13_PlayerController->ShowGameHUD();
+		}
+	}
+
+	if(UGameInstance * GameInstance = GetGameInstance())
+	{
+		UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(GameInstance);
+		if (Team13_GameInstance)
+		{
+			CurrentStageIndex = Team13_GameInstance->CurrentStageIndex;
+		}
+	}
+
+	FString CurrentMapName = GetWorld()->GetMapName();
+	if (!CurrentMapName.Contains("StartMenu"))
+	{
+		GetWorldTimerManager().SetTimer(
+			StageTimerHandle,
+			this,
+			&ATeam13_GameState::OnStageTimeUp,
+			StageDuration,
+			false);
+	}
+}
+
+void ATeam13_GameState::OnStageTimeUp()
+{
+	EndStage();
+}
+
+//스테이지 종료
+void ATeam13_GameState::EndStage()
+{
+	GetWorldTimerManager().ClearTimer(StageTimerHandle);
+
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(GameInstance);
+		if (Team13_GameInstance)
+		{
+			CurrentStageIndex++;
+			Team13_GameInstance->CurrentStageIndex = CurrentStageIndex;
+
+			if (CurrentStageIndex >= MaxStageIndex)
+			{
+				OnGameOver();
+				return;
+			}
+
+			if (StageMapNames.IsValidIndex(CurrentStageIndex))
+			{
+				UGameplayStatics::OpenLevel(GetWorld(), StageMapNames[CurrentStageIndex]);
+			}
+			else
+			{
+				OnGameOver();
+			}
+		}
+	}
+}
+
+//게임 종료
+void ATeam13_GameState::OnGameOver()
+{
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
+		{
+			Team13_PlayerController->SetPause(true);
+			Team13_PlayerController->ShowEndMenu(true); //임시
+			/*if (플레이어가 죽음 or 시간안에 레벨도달실패)
+			{
+				Team13_PlayerController->ShowEndMenu(true);
+			}
+			else (성공)
+			{
+				Team13_PlayerController->ShowEndMenu(false);
+			}*/
 		}
 	}
 }
@@ -99,10 +183,6 @@ void ATeam13_GameState::UpdateHUD()
 		}
 	}
 
-	GetWorldTimerManager().SetTimer(
-		HUDUpdateTimerHandle,
-		this,
-		&ATeam13_GameState::UpdateHUD,
-		0.1f,
-		true);
+	
 }
+

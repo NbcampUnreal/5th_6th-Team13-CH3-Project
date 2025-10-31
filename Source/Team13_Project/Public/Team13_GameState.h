@@ -14,9 +14,25 @@ public:
 	virtual void BeginPlay() override;
 
 	//int32 EnemyToSpawn;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stage")
+	int32 CurrentStageIndex;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stage")
+	int32 MaxStageIndex;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stage")
+	TArray<FName> StageMapNames;
+
+	FTimerHandle StageTimerHandle;
 	FTimerHandle HUDUpdateTimerHandle;
 
-	void StartLevel();
+	void StartStage();
+	void EndStage();
+	void OnGameOver();
 	void UpdateHUD();
+	
+	//юс╫ц
+	void OnStageTimeUp();
+
+	float StageDuration;
 };

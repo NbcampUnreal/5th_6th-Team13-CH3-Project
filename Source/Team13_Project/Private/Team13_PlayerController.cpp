@@ -28,7 +28,6 @@ void ATeam13_PlayerController::BeginPlay()
 
 	//StartMenu가 있다면 ShowStartMenu호출
 	FString CurrentMapName = GetWorld()->GetMapName();
-	UE_LOG(LogTemp, Warning, TEXT("Current Map Name: %s"), *CurrentMapName);
 	if (CurrentMapName.Contains("StartMenu"))
 	{
 		ShowStartMenu();
@@ -255,11 +254,16 @@ void ATeam13_PlayerController::ShowGameHUD()
 //게임시작
 void ATeam13_PlayerController::StartGame()
 {
-	UGameplayStatics::OpenLevel(GetWorld(), FName("GameMenu"));
+	if (UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
+	{
+		Team13_GameInstance->CurrentStageIndex = 0;
+	}
+
+	UGameplayStatics::OpenLevel(GetWorld(), FName("Team13_SH_Map"));
 	SetPause(false);
 }
 
-//게임 종료
+//게임 완전 종료
 void ATeam13_PlayerController::QuitGame()
 {
 	UKismetSystemLibrary::QuitGame(
@@ -272,35 +276,35 @@ void ATeam13_PlayerController::QuitGame()
 //실행되는 위젯 제거
 void ATeam13_PlayerController::WidgetRemove()
 {
-	//실행되는 HUD위젯이 있다면 제거
+	//실행되는 HUD위젯 제거
 	if (HUDWidgetInstance)
 	{
 		HUDWidgetInstance->RemoveFromParent();
 		HUDWidgetInstance = nullptr;
 	}
 
-	//실행되는 메인메뉴의 위젯이 있다면 제거
+	//실행되는 메인메뉴의 위젯 제거
 	if (MainMenuWidgetInstance)
 	{
 		MainMenuWidgetInstance->RemoveFromParent();
 		MainMenuWidgetInstance = nullptr;
 	}
 
-	//실행되는 가이드메뉴의 위젯이 있다면 제거
+	//실행되는 가이드메뉴의 위젯 제거
 	if (GuideWidgetInstance)
 	{
 		GuideWidgetInstance->RemoveFromParent();
 		GuideWidgetInstance = nullptr;
 	}
 
-	//실행되는 셋팅메뉴의 위젯이 있다면 제거
+	//실행되는 셋팅메뉴의 위젯 제거
 	if (SettingWidgetInstance)
 	{
 		SettingWidgetInstance->RemoveFromParent();
 		SettingWidgetInstance = nullptr;
 	}
 
-	//실행되는 엔드메뉴의 위젯이 있다면 제거
+	//실행되는 엔드메뉴의 위젯 제거
 	if (EndWidgetInstance)
 	{
 		EndWidgetInstance->RemoveFromParent();
