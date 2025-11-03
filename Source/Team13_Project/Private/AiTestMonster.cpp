@@ -112,11 +112,10 @@ void AAiTestMonster::UpdateOutlineByPlayerLevel()
 	const int32 PlayerLevel = PlayerCharacter->GetHeroLevel();
 	const int32 MonsterLevel = GetLevel(); // BaseMonsterCharacter로부터 레벨을 가져옴
 
-	// 포스트 프로세스 머티리얼에서 사용할 스텐실 값입니다.
-	// 이 값들은 머티리얼에서 실제로 사용하는 값과 일치해야 합니다.
-	const int32 STENCIL_RED_OUTLINE = 2;  // 예: 몬스터 레벨이 더 높을 때
-	const int32 STENCIL_BLUE_OUTLINE = 0; // 예: 플레이어 레벨이 같거나 높을 때
-
+	const int32 STENCIL_RED_OUTLINE = 255;   // 높을때 (빨강)
+	const int32 STENCIL_GREEN_OUTLINE = 128; // 같을때 (초록)
+	const int32 STENCIL_BLUE_OUTLINE = 0;  // 낮을때 (파랑)
+	
 	if (MonsterLevel > PlayerLevel)
 	{
 		// 몬스터 레벨이 더 높음 -> 빨간색 아웃라인
@@ -125,9 +124,16 @@ void AAiTestMonster::UpdateOutlineByPlayerLevel()
 		BB->SetValueAsBool(TEXT("IsUpperLevel"), true);
 		UE_LOG(LogTemp, Log, TEXT("Outline: RED (Monster: %d > Player: %d)"), MonsterLevel, PlayerLevel);
 	}
-	else
+	else if (MonsterLevel == PlayerLevel)
 	{
-		// 몬스터 레벨이 같거나 낮음 -> 파란색 아웃라인
+		// 몬스터 레벨이 같거나 낮음 -> 초록색 아웃라인
+		GetMesh()->SetRenderCustomDepth(true);
+		GetMesh()->SetCustomDepthStencilValue(STENCIL_GREEN_OUTLINE);
+		BB->SetValueAsBool(TEXT("IsUpperLevel"), false);
+		UE_LOG(LogTemp, Log, TEXT("Outline: Green (Monster: %d <= Player: %d)"), MonsterLevel, PlayerLevel);
+	}else
+	{
+		// 몬스터가 허접임 -> 파란색 아웃라인
 		GetMesh()->SetRenderCustomDepth(true);
 		GetMesh()->SetCustomDepthStencilValue(STENCIL_BLUE_OUTLINE);
 		BB->SetValueAsBool(TEXT("IsUpperLevel"), false);
