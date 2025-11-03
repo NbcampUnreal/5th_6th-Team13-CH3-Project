@@ -17,7 +17,8 @@ public class Team13_Project : ModuleRules
 			"EnhancedInput",
 			"AIModule",
 			"GameplayTasks",
-			"NavigationSystem"
-		});
+			"NavigationSystem",
+            "Niagara"
+        });
 	}
 }

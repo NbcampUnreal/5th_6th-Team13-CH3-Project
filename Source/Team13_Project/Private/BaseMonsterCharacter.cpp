@@ -17,6 +17,10 @@ void ABaseMonsterCharacter::BeginPlay()
 		Capsule->SetNotifyRigidBodyCollision(true);
 		Capsule->OnComponentHit.AddDynamic(this, &ABaseMonsterCharacter::OnCapsuleHit);
 	}
+	if (CombatComp)
+	{
+		CombatComp->InitializeComponent();
+	}
 
 	Tags.AddUnique(FName("Monster")); //태그 달기
 }
@@ -25,6 +29,7 @@ ABaseMonsterCharacter::ABaseMonsterCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	CombatComp = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComp"));
+	
 	
 }
 
