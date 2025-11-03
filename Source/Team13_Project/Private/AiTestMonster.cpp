@@ -41,6 +41,19 @@ void AAiTestMonster::BeginPlay()
 	Movement->MaxWalkSpeed = WalkSpeed;
 	UE_LOG(LogTemp, Warning, TEXT("AI Test Spawned"));
 
+
+	AICon = Cast<AAIController>(GetController());
+	if (!AICon)
+	{	UE_LOG(LogTemp, Warning, TEXT("AI Controller missing"));
+		return;
+	}
+	BB = AICon->GetBlackboardComponent();
+	if (!BB)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AI BlackBoard missing"));
+		return;
+	}
+
 	// ===========================
 	// 아웃라인 관련 로직 (BeginPlay에 추가)
 	// ===========================
@@ -65,17 +78,7 @@ void AAiTestMonster::BeginPlay()
 void AAiTestMonster::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	AAIController* AICon = Cast<AAIController>(GetController());
-	if (!AICon)
-	{	UE_LOG(LogTemp, Warning, TEXT("AI Controller missing"));
-		return;
-	}
-	UBlackboardComponent* BB = AICon->GetBlackboardComponent();
-	if (!BB)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("AI BlackBoard missing"));
-		return;
-	}
+	
 	//UE_LOG(LogTemp, Warning, TEXT("AI Control/BlackBoard allright"));
 	bool bIsRunning = BB->GetValueAsBool(TEXT("IsRunning"));
 
@@ -119,6 +122,7 @@ void AAiTestMonster::UpdateOutlineByPlayerLevel()
 		// 몬스터 레벨이 더 높음 -> 빨간색 아웃라인
 		GetMesh()->SetRenderCustomDepth(true);
 		GetMesh()->SetCustomDepthStencilValue(STENCIL_RED_OUTLINE);
+		BB->SetValueAsBool(TEXT("IsUpperLevel"), true);
 		UE_LOG(LogTemp, Log, TEXT("Outline: RED (Monster: %d > Player: %d)"), MonsterLevel, PlayerLevel);
 	}
 	else
@@ -126,6 +130,7 @@ void AAiTestMonster::UpdateOutlineByPlayerLevel()
 		// 몬스터 레벨이 같거나 낮음 -> 파란색 아웃라인
 		GetMesh()->SetRenderCustomDepth(true);
 		GetMesh()->SetCustomDepthStencilValue(STENCIL_BLUE_OUTLINE);
+		BB->SetValueAsBool(TEXT("IsUpperLevel"), false);
 		UE_LOG(LogTemp, Log, TEXT("Outline: BLUE (Monster: %d <= Player: %d)"), MonsterLevel, PlayerLevel);
 	}
 }
