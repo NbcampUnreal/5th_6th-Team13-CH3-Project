@@ -50,34 +50,6 @@ void ATeam13_PlayerController::ShowStartMenu()
 			SetInputMode(FInputModeUIOnly());
 		}
 	}
-
-	//굳이 안써도됨
-	if (MainMenuWidgetInstance)
-	{
-		//Start버튼 Text
-		if (UTextBlock* StartButton = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButtonText"))))
-		{
-			StartButton->SetText(FText::FromString(TEXT("Start")));
-		}
-
-		//Guide버튼 Text
-		if (UTextBlock* GuideButton = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("GuideButtonText"))))
-		{
-			GuideButton->SetText(FText::FromString(TEXT("Guide")));
-		}
-
-		//Setting버튼 Text
-		if (UTextBlock* SettingButton = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("SettingButtonText"))))
-		{
-			SettingButton->SetText(FText::FromString(TEXT("Setting")));
-		}
-
-		//Quit버튼 Text
-		if (UTextBlock* QuitButton = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("QuitButtonText"))))
-		{
-			QuitButton->SetText(FText::FromString(TEXT("Quit")));
-		}
-	}
 }
 
 void ATeam13_PlayerController::ShowGuideMenu()
@@ -93,22 +65,6 @@ void ATeam13_PlayerController::ShowGuideMenu()
 			GuideWidgetInstance->AddToViewport();
 			bShowMouseCursor = true;			//마우스 커서O
 			SetInputMode(FInputModeUIOnly());
-		}
-	}
-
-	//굳이 안써도됨
-	if (GuideWidgetInstance)
-	{
-		//Back버튼 Text
-		if (UTextBlock* BackButton = Cast<UTextBlock>(GuideWidgetInstance->GetWidgetFromName(TEXT("BackButtonText"))))
-		{
-			BackButton->SetText(FText::FromString(TEXT("Back")));
-		}
-
-		//Next버튼 Text
-		if (UTextBlock* NextButton = Cast<UTextBlock>(GuideWidgetInstance->GetWidgetFromName(TEXT("NextButtonText"))))
-		{
-			NextButton->SetText(FText::FromString(TEXT("Next")));
 		}
 	}
 }
@@ -127,16 +83,6 @@ void ATeam13_PlayerController::ShowSettingMenu()
 			SettingWidgetInstance->AddToViewport();
 			bShowMouseCursor = true;			//마우스 커서O
 			SetInputMode(FInputModeUIOnly());
-		}
-	}
-
-	//굳이 안써도됨
-	if (SettingWidgetInstance)
-	{
-		//Back버튼 Text
-		if (UTextBlock* BackButton = Cast<UTextBlock>(SettingWidgetInstance->GetWidgetFromName(TEXT("BackButtonText"))))
-		{
-			BackButton->SetText(FText::FromString(TEXT("Back")));
 		}
 	}
 }

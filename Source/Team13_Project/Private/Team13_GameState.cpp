@@ -9,7 +9,7 @@
 
 ATeam13_GameState::ATeam13_GameState()
 {
-	StageDuration = 3.0f; //임시 3초
+	StageDuration = 10.0f; //임시 10초
 	CurrentStageIndex = 0;
 	MaxStageIndex = 2;
 }
@@ -157,7 +157,7 @@ void ATeam13_GameState::UpdateHUD()
 						//HP Text
 						/*if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("HPText"))))
 						{
-							ExpText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), )));
+							ExpText->SetText(FText::FromString(FString::Printf(TEXT("%d"), )));
 						}*/
 						
 						//Exp Text
