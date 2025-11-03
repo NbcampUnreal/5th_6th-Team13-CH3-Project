@@ -21,7 +21,7 @@ enum class ESkillState : uint8
 
 /* ===========================
  *  알림(이벤트) 델리게이트 타입 선언
- *  - 클래스 "바깥" 전역 영역에 선언해야 UHT 경고가 없습니다.
+ *  레벨업/HP변경/사망 알림
  * =========================== */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHeroLevelUp, int32, OldLevel, int32, NewLevel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnHPChanged, float, OldHP, float, NewHP, float, Delta);
