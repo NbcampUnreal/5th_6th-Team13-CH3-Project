@@ -18,8 +18,13 @@ public class Team13_Project : ModuleRules
 			"AIModule",
 			"GameplayTasks",
 			"NavigationSystem",
+<<<<<<< HEAD
 			"Niagara",
 			"DeveloperSettings"
 		});
+=======
+            "Niagara"
+        });
+>>>>>>> c93b057877c6b775a465bb999e8d2d5e4c4d851d
 	}
 }

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "HitDamageable.h" // 데미지 인터페이스
 #include "HERO_Character.generated.h"
 
 /**
@@ -24,14 +25,15 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class UCharacterMovementComponent;
+class UCombatComponent;
 
 /**
  * AHERO_Character
  *  - ACharacter 기반: 캡슐 충돌, 중력, 지면 걷기, 회전 처리 등 언리얼 기본 사람형 이동을 자동으로 가짐
- *  - 우리의 이동/가속/대쉬/스탯 시스템을 통합
+ *  - 이동/가속/대쉬/스탯 시스템을 통합
  */
 UCLASS()
-class TEAM13_PROJECT_API AHERO_Character : public ACharacter
+class TEAM13_PROJECT_API AHERO_Character : public ACharacter, public IHitDamageable
 {
 	GENERATED_BODY()
 
@@ -59,6 +61,11 @@ protected:
 	void Input_Accelerate(const FInputActionValue& Value); 
 	void Input_Look(const FInputActionValue& Value);       
 	void Input_DashSkill(const FInputActionValue& Value); 
+
+	//충돌 감지 함수
+	UFUNCTION()
+	void OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* Other, UPrimitiveComponent* OtherComp,
+		FVector NormalImpulse, const FHitResult& Hit);
 
 public:
 	/* ===========================
@@ -139,6 +146,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
 	float Weight;
 
+	// 크기 계수 - CSM
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
+	float SizeScale = 1.0f;
+
 	/* ===========================
 	 *  HP / 레벨업 관련
 	 * =========================== */
@@ -150,10 +161,6 @@ public:
 	// 최대 HP
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
 	float MaxHP;
-
-	// 레벨당 MaxHP 증가량
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
-	float HPPerLevelGain;
 
 	/* ===========================
 	 *  스킬(대쉬) 관련
@@ -206,4 +213,25 @@ public:
 	// 강제로 레벨업 (테스트용)
 	UFUNCTION(BlueprintCallable, Category = "HP")
 	void ForceLevelUp();
+
+	// 크기증가 함수 - CSM
+	void SyncSizeToScale();
+	//데미지 관련 함수들
+	virtual float GetCurrentHealth() const override { return HP; }
+	virtual float GetMaxHealth() const override { return MaxHP; }
+	virtual void  SetCurrentHealth(float NewValue) override;
+
+	virtual int32 GetLevel() const override { return GetHeroLevel(); }
+	virtual float GetSizeScale() const override { return GetActorScale3D().GetMax(); }
+
+	virtual float GetMaxSpeed() const override { return MAX_V; }
+	virtual float GetCurrentSpeed() const override { return GetVelocity().Size(); }
+
+	virtual bool  IsDead() const override { return HP <= 0.f; }
+	virtual void  OnDead() override { /* 필요시 추가 처리 */ }
+
+	virtual void  EnableRagdollAndImpulse(const FVector& Impulse) override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	UCombatComponent* CombatComp;
 };
