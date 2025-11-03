@@ -4,33 +4,47 @@
 #include "Team13_GameState.h"
 #include "SpawnEnemy.h"
 #include "Kismet/GameplayStatics.h"
+#include "AiTestMonster.h"
+#include "ObjectPoolManager.h"
 
 ATeam13_GameState::ATeam13_GameState()
 {
+    EnemyToSpawn = 5;
 
+    EnemySpawned = 0;
+
+    EnemyAlive = 0;
 }
 
 void ATeam13_GameState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	TArray<AActor*> FoundVolumes;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnEnemy::StaticClass(), FoundVolumes);
+    EnemySpawned = 0;
+    EnemyAlive = 0;
+    UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
+    if (PoolManager)
+    {
+        PoolManager->InitializePool(AAiTestMonster::StaticClass(), 50);
+    }
 
-	int32 BaseSpawnCount = 40;
-	float SpawnIncreaseRate = 0.2f;
+    TArray<AActor*> FoundVolumes;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnEnemy::StaticClass(), FoundVolumes);
 
-	EnemyToSpawn = BaseSpawnCount + (BaseSpawnCount * SpawnIncreaseRate);
-
-	for (int32 i = 0; i < BaseSpawnCount; i++)
-	{
-		if (FoundVolumes.Num() > 0)
-		{
-			ASpawnEnemy* SpawnEnemy = Cast<ASpawnEnemy>(FoundVolumes[0]);
-			if (SpawnEnemy)
-			{
-				AActor* SpawnedActor = SpawnEnemy->SpawnRandomEnemy();
-			}
-		}
-	}
+    if (FoundVolumes.Num() > 0)
+    {
+        ASpawnEnemy* SpawnVolume = Cast<ASpawnEnemy>(FoundVolumes[0]);
+        if (SpawnVolume)
+        {
+            for (int32 i = 0; i < EnemyToSpawn; i++)
+            {
+                AActor* SpawnedActor = SpawnVolume->SpawnRandomEnemy();
+                if (SpawnedActor)
+                {
+                    EnemySpawned++;
+                    EnemyAlive++;
+                }
+            }
+        }
+    }
 }

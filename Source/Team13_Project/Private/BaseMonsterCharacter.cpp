@@ -84,6 +84,18 @@ void ABaseMonsterCharacter::EnableRagdollAndImpulse(const FVector& Impulse)
     }
 }
 
+void ABaseMonsterCharacter::OnSpawnFromPool_Implementation()
+{
+    SetActorHiddenInGame(false);
+    SetActorEnableCollision(true);
+}
+
+void ABaseMonsterCharacter::OnReturnToPool_Implementation()
+{
+    SetActorHiddenInGame(true);
+    SetActorEnableCollision(false);
+}
+
 
 
 

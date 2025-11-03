@@ -14,8 +14,8 @@ UCLASS()
 class TEAM13_PROJECT_API ASpawnEnemy : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	ASpawnEnemy();
 
@@ -40,7 +40,7 @@ protected:
 	FVector GetRandomPointInVolume_Sphere() const;
 
 
-public:	
+public:
 	// Called every frame
 	//virtual void Tick(float DeltaTime) override;
 

@@ -2,12 +2,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "HitDamageable.h"
+#include "Poolable.h"
 #include "BaseMonsterCharacter.generated.h"
 
 class UCombatComponent;
 
 UCLASS()
-class TEAM13_PROJECT_API ABaseMonsterCharacter : public ACharacter, public IHitDamageable
+class TEAM13_PROJECT_API ABaseMonsterCharacter : public ACharacter, public IHitDamageable, public IPoolable
 {
     GENERATED_BODY()
 
@@ -43,6 +44,9 @@ public:
     virtual bool  IsDead() const override { return CurrentHealth <= 0.f; }
     virtual void  OnDead() override;
     virtual void  EnableRagdollAndImpulse(const FVector& Impulse) override;
+
+    virtual void OnSpawnFromPool_Implementation() override;
+    virtual void OnReturnToPool_Implementation() override;
 
 protected:
     virtual void BeginPlay() override; 
