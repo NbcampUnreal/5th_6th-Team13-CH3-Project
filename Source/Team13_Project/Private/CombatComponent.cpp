@@ -120,6 +120,7 @@ void UCombatComponent::InitializeComponent()
 
     bFeedbackInitialized = true;
 }
+
 void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>& Attacker, const TScriptInterface<IHitDamageable>& Defender, const FVector& ImpactDirection) const
 {
     if (!Attacker || !Defender || Defender->IsDead())
@@ -144,9 +145,7 @@ void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>&
         EndInvincibility(DefenderActor);
 
         Defender->OnDead();
-        const FVector Impulse = ImpactDirection.GetSafeNormal()
-            * Settings.RagdollImpulseScale
-            * FMath::Max(1.f, Attacker->GetSizeScale());
+        const FVector Impulse = ImpactDirection.GetSafeNormal() * Settings.RagdollImpulseScale * FMath::Max(1.f, Attacker->GetSizeScale());
         Defender->EnableRagdollAndImpulse(Impulse);
     }
 }

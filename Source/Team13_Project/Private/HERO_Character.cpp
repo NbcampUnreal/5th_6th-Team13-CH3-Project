@@ -67,7 +67,7 @@ AHERO_Character::AHERO_Character()
 	Weight = 10.0f;
 
 	// HP / 레벨업 관련
-	MaxHP = 3.0f;
+	MaxHP = 100.0f;
 	HP = MaxHP;
 
 	// 스킬(대쉬) 관련
