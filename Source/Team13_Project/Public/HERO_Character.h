@@ -30,7 +30,7 @@ class UCombatComponent;
 /**
  * AHERO_Character
  *  - ACharacter 기반: 캡슐 충돌, 중력, 지면 걷기, 회전 처리 등 언리얼 기본 사람형 이동을 자동으로 가짐
- *  - 우리의 이동/가속/대쉬/스탯 시스템을 통합
+ *  - 이동/가속/대쉬/스탯 시스템을 통합
  */
 UCLASS()
 class TEAM13_PROJECT_API AHERO_Character : public ACharacter, public IHitDamageable
@@ -161,10 +161,6 @@ public:
 	// 최대 HP
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
 	float MaxHP;
-
-	// 레벨당 MaxHP 증가량
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
-	float HPPerLevelGain;
 
 	/* ===========================
 	 *  스킬(대쉬) 관련
