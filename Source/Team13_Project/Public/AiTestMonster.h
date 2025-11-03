@@ -34,6 +34,7 @@ public:
 	float RunSpeed = 600.0f;
 	AAIController* AICon;
 	UBlackboardComponent* BB;
+	int32 DesiredStencilValue;
 protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual void BeginPlay() override;

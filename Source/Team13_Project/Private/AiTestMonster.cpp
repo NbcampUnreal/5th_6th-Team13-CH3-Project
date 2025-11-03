@@ -89,11 +89,52 @@ void AAiTestMonster::Tick(float DeltaTime)
 		//UE_LOG(LogTemp, Warning, TEXT("AI Speed Set"));
 		MoveComp->MaxWalkSpeed = TargetSpeed;
 	}
+
+	if (PlayerCharacter && GetMesh() && DesiredStencilValue >= 0)
+	{
+		APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
+		if (!CameraManager)
+		{
+			GetMesh()->SetRenderCustomDepth(false); 
+			return;
+		}
+
+		const FVector CameraLocation = CameraManager->GetCameraLocation();
+		const FVector MonsterLocation = GetActorLocation(); 
+
+		FHitResult HitResult;
+		FCollisionQueryParams Params;
+		Params.AddIgnoredActor(this); 
+		Params.AddIgnoredActor(PlayerCharacter); 
+
+		// 카메라에서 몬스터로 라인 트레이스 (Visibility 채널 사용)
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			CameraLocation,
+			MonsterLocation,
+			ECC_Visibility,
+			Params
+		);
+
+		if (bHit)
+		{
+			// 장애물 있음
+			GetMesh()->SetRenderCustomDepth(false);
+		}
+		else
+		{
+			// 장애물 없음
+			GetMesh()->SetRenderCustomDepth(true);
+			GetMesh()->SetCustomDepthStencilValue(DesiredStencilValue);
+		}
+	}
+	else if (GetMesh())
+	{
+		GetMesh()->SetRenderCustomDepth(false);
+	}
 }
 
-// ===========================
-// 아웃라인 업데이트 함수 (새로 추가)
-// ===========================
+
 
 void AAiTestMonster::UpdateOutlineByPlayerLevel()
 {
@@ -110,7 +151,7 @@ void AAiTestMonster::UpdateOutlineByPlayerLevel()
 	}
 
 	const int32 PlayerLevel = PlayerCharacter->GetHeroLevel();
-	const int32 MonsterLevel = GetLevel(); // BaseMonsterCharacter로부터 레벨을 가져옴
+	const int32 MonsterLevel = GetLevel(); 
 
 	const int32 STENCIL_RED_OUTLINE = 255;   // 높을때 (빨강)
 	const int32 STENCIL_GREEN_OUTLINE = 128; // 같을때 (초록)
@@ -122,6 +163,7 @@ void AAiTestMonster::UpdateOutlineByPlayerLevel()
 		GetMesh()->SetRenderCustomDepth(true);
 		GetMesh()->SetCustomDepthStencilValue(STENCIL_RED_OUTLINE);
 		BB->SetValueAsBool(TEXT("IsUpperLevel"), true);
+		DesiredStencilValue = STENCIL_RED_OUTLINE;
 		UE_LOG(LogTemp, Log, TEXT("Outline: RED (Monster: %d > Player: %d)"), MonsterLevel, PlayerLevel);
 	}
 	else if (MonsterLevel == PlayerLevel)
@@ -130,6 +172,7 @@ void AAiTestMonster::UpdateOutlineByPlayerLevel()
 		GetMesh()->SetRenderCustomDepth(true);
 		GetMesh()->SetCustomDepthStencilValue(STENCIL_GREEN_OUTLINE);
 		BB->SetValueAsBool(TEXT("IsUpperLevel"), false);
+		DesiredStencilValue = STENCIL_GREEN_OUTLINE;
 		UE_LOG(LogTemp, Log, TEXT("Outline: Green (Monster: %d <= Player: %d)"), MonsterLevel, PlayerLevel);
 	}else
 	{
@@ -137,6 +180,7 @@ void AAiTestMonster::UpdateOutlineByPlayerLevel()
 		GetMesh()->SetRenderCustomDepth(true);
 		GetMesh()->SetCustomDepthStencilValue(STENCIL_BLUE_OUTLINE);
 		BB->SetValueAsBool(TEXT("IsUpperLevel"), false);
+		DesiredStencilValue = STENCIL_BLUE_OUTLINE;
 		UE_LOG(LogTemp, Log, TEXT("Outline: BLUE (Monster: %d <= Player: %d)"), MonsterLevel, PlayerLevel);
 	}
 }
