@@ -14,10 +14,18 @@
 UENUM(BlueprintType)
 enum class ESkillState : uint8
 {
-	Normal      UMETA(DisplayName = "Normal"),
-	AimingDash  UMETA(DisplayName = "AimingDash"),
-	Dashing     UMETA(DisplayName = "Dashing")
+	Normal,
+	AimingDash,
+	Dashing
 };
+
+/* ===========================
+ *  알림(이벤트) 델리게이트 타입 선언
+ *  - 클래스 "바깥" 전역 영역에 선언해야 UHT 경고가 없습니다.
+ * =========================== */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHeroLevelUp, int32, OldLevel, int32, NewLevel);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnHPChanged, float, OldHP, float, NewHP, float, Delta);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHeroDeath);
 
 class USpringArmComponent;
 class UCameraComponent;
@@ -38,6 +46,10 @@ class TEAM13_PROJECT_API AHERO_Character : public ACharacter
 public:
 	AHERO_Character();
 
+	// AnimBP에서 읽기용(스킬 상태 Getter)
+	UFUNCTION(BlueprintPure, Category = "Skill")
+	ESkillState GetSkillState() const { return CurrentSkillState; }
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
@@ -56,9 +68,9 @@ protected:
 	/* ===========================
 	 *  입력 처리 콜백
 	 * =========================== */
-	void Input_Accelerate(const FInputActionValue& Value); 
-	void Input_Look(const FInputActionValue& Value);       
-	void Input_DashSkill(const FInputActionValue& Value); 
+	void Input_Accelerate(const FInputActionValue& Value);
+	void Input_Look(const FInputActionValue& Value);
+	void Input_DashSkill(const FInputActionValue& Value);
 
 public:
 	/* ===========================
@@ -155,8 +167,9 @@ public:
 	 *  스킬(대쉬) 관련
 	 * =========================== */
 
+	 // 현재 스킬 상태(AnimBP에서 읽음)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
-	ESkillState CurrentSkillState;
+	ESkillState CurrentSkillState = ESkillState::Normal;
 
 	// 돌진 스킬 유지기간
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill")
@@ -173,6 +186,18 @@ public:
 	// 현재 남은 쿨다운 시간
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
 	float DashCooldownRemaining;
+
+	/* ===========================
+	 *  알림 이벤트 (BP에서 Bind 가능, 틱 사용 없음)
+	 * =========================== */
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnHeroLevelUp OnHeroLevelUp;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnHPChanged OnHPChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnHeroDeath OnHeroDeath;
 
 public:
 	/* ===========================
