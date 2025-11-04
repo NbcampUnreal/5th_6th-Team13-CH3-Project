@@ -430,5 +430,9 @@ void UCombatComponent::EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, 
             MID->SetScalarParameterValue(Param, Value);
         }
     }
+<<<<<<< HEAD
 }
 
+=======
+}
+>>>>>>> 56ffec2a804be14381770ef0067e8e69128380e3

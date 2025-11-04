@@ -2,13 +2,18 @@
 #include "Team13_PlayerController.h"
 #include "Team13_GameInstance.h"
 #include "SpawnEnemy.h"
+#include "HERO_Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
 
 ATeam13_GameState::ATeam13_GameState()
 {
+<<<<<<< HEAD
 	StageDuration = 100.f;
+=======
+	StageDuration = 60.f;
+>>>>>>> 56ffec2a804be14381770ef0067e8e69128380e3
 	CurrentStageIndex = 0;
 	MaxStageIndex = 2;
 }
@@ -17,6 +22,9 @@ void ATeam13_GameState::BeginPlay()
 {
 	Super::BeginPlay();
 
+	HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+
+	HERO_Character->OnHeroDeath.AddDynamic(this, &ATeam13_GameState::OnGameOver);
 	/*TArray<AActor*> FoundVolumes;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnEnemy::StaticClass(), FoundVolumes);
 
@@ -121,15 +129,24 @@ void ATeam13_GameState::OnGameOver()
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
 		{
 			Team13_PlayerController->SetPause(true);
+<<<<<<< HEAD
 			Team13_PlayerController->ShowEndMenu(true); //�ӽ�
 			/*if (�÷��̾ ���� or �ð��ȿ� �������޽���)
 			{
 				Team13_PlayerController->ShowEndMenu(true);
 			}
 			else (����)
+=======
+			if (HERO_Character->IsDead() || 
+				(StageDuration < 0 && HERO_Character->GetHeroLevel() < 5))
+			{
+				Team13_PlayerController->ShowEndMenu(true);
+			}
+			else
+>>>>>>> 56ffec2a804be14381770ef0067e8e69128380e3
 			{
 				Team13_PlayerController->ShowEndMenu(false);
-			}*/
+			}
 		}
 	}
 }
