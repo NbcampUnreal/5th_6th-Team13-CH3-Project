@@ -154,7 +154,7 @@ void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>&
     }
 }
 
-void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,  float Damage,const FVector& HitImpulseDir) const
+void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,  float Damage,const FVector& HitImpulseDir)
 {
     if (!Target || Target->IsDead())
         return;
@@ -432,22 +432,3 @@ void UCombatComponent::EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, 
     }
 }
 
-void UCombatComponent::SetBlink(AActor* Target, bool bOn) const
-{
-    if (!Target) return;
-
-    // 전용 서버에서는 연출 건너뜀
-    if (const UWorld* W = Target->GetWorld())
-    {
-        if (W->IsNetMode(NM_DedicatedServer)) return;
-    }
-
-    BlinkStateMap.FindOrAdd(Target) = bOn;
-
-    const FName ParamName = Feedback.BlinkScalarParam.IsNone() ? FName(TEXT("HitBlink")) : Feedback.BlinkScalarParam;
-
-    ForEachMesh(Target, [this, ParamName, bOn](UMeshComponent* Mesh)
-        {
-            EnsureMidAndSetScalar(Mesh, ParamName, bOn ? 1.0f : 0.0f);
-        });
-}

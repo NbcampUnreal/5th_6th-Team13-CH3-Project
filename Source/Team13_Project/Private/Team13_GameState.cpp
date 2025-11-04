@@ -8,7 +8,7 @@
 
 ATeam13_GameState::ATeam13_GameState()
 {
-	StageDuration = 10.f;
+	StageDuration = 100.f;
 	CurrentStageIndex = 0;
 	MaxStageIndex = 2;
 }
@@ -82,7 +82,7 @@ void ATeam13_GameState::OnStageTimeUp()
 	EndStage();
 }
 
-//½ºÅ×ÀÌÁö Á¾·á
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 void ATeam13_GameState::EndStage()
 {
 	GetWorldTimerManager().ClearTimer(StageTimerHandle);
@@ -113,7 +113,7 @@ void ATeam13_GameState::EndStage()
 	}
 }
 
-//°ÔÀÓ Á¾·á
+//ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 void ATeam13_GameState::OnGameOver()
 {
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
@@ -121,12 +121,12 @@ void ATeam13_GameState::OnGameOver()
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
 		{
 			Team13_PlayerController->SetPause(true);
-			Team13_PlayerController->ShowEndMenu(true); //ÀÓ½Ã
-			/*if (ÇÃ·¹ÀÌ¾î°¡ Á×À½ or ½Ã°£¾È¿¡ ·¹º§µµ´Þ½ÇÆÐ)
+			Team13_PlayerController->ShowEndMenu(true); //ï¿½Ó½ï¿½
+			/*if (ï¿½Ã·ï¿½ï¿½Ì¾î°¡ ï¿½ï¿½ï¿½ï¿½ or ï¿½Ã°ï¿½ï¿½È¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ½ï¿½ï¿½ï¿½)
 			{
 				Team13_PlayerController->ShowEndMenu(true);
 			}
-			else (¼º°ø)
+			else (ï¿½ï¿½ï¿½ï¿½)
 			{
 				Team13_PlayerController->ShowEndMenu(false);
 			}*/
