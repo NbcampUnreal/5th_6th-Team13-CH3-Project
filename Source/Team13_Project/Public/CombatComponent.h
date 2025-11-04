@@ -187,10 +187,10 @@ private:
 	void SetBlink(AActor* Target, bool bOn) const;       // 명시 on/off
 
 	// 액터의 UMeshComponent 전부 순회 유틸
-	static void ForEachMesh(AActor* Target, TFunctionRef<void(UMeshComponent*)> Fn);
+	//static void ForEachMesh(AActor* Target, TFunctionRef<void(UMeshComponent*)> Fn);
 
 	// 한 MeshComponent의 모든 머티리얼 슬롯을 MID로 보장하고 파라미터 설정
-	void EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, float Value) const;
+	//void EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, float Value) const;
 
 	bool IsInvincible(AActor* Target) const;
 	

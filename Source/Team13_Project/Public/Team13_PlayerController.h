@@ -6,6 +6,8 @@
 
 class UUserWidget;
 class UTextBlock;
+class UInputMappingContext;
+class UInputAction;
 
 UCLASS()
 class TEAM13_PROJECT_API ATeam13_PlayerController : public APlayerController
@@ -14,6 +16,19 @@ class TEAM13_PROJECT_API ATeam13_PlayerController : public APlayerController
 
 public:
 	ATeam13_PlayerController();
+
+	//Player
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputMappingContext* IMC_HERO;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* IA_HERO_Look;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* IA_HERO_Accelerate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* IA_HERO_DashSkill;
 
 	//∞‘¿”¡ﬂ HUD
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")

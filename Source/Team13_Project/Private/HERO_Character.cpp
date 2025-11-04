@@ -12,6 +12,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "Team13_PlayerController.h"
 
 AHERO_Character::AHERO_Character()
 {
@@ -103,20 +104,20 @@ void AHERO_Character::BeginPlay()
 		MoveComp->MaxWalkSpeed = CURRENT_V;
 	}
 
-	// Enhanced Input: 매핑 컨텍스트 등록
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	{
-		if (ULocalPlayer* LP = PC->GetLocalPlayer())
-		{
-			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-			{
-				if (IMC_HERO)
-				{
-					Subsystem->AddMappingContext(IMC_HERO, /*Priority*/0);
-				}
-			}
-		}
-	}
+	//// Enhanced Input: 매핑 컨텍스트 등록
+	//if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	//{
+	//	if (ULocalPlayer* LP = PC->GetLocalPlayer())
+	//	{
+	//		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+	//		{
+	//			if (IMC_HERO)
+	//			{
+	//				Subsystem->AddMappingContext(IMC_HERO, /*Priority*/0);
+	//			}
+	//		}
+	//	}
+	//}
 
 	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
 	{
@@ -157,25 +158,41 @@ void AHERO_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	// Enhanced Input으로 바인딩
 	if (UEnhancedInputComponent* EI = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// 시야 회전
-		if (IA_HERO_Look)
+		if (ATeam13_PlayerController* PlayerController = Cast<ATeam13_PlayerController>(GetController()))
 		{
-			EI->BindAction(IA_HERO_Look, ETriggerEvent::Triggered, this, &AHERO_Character::Input_Look);
-		}
+			// 시야 회전
+			if (PlayerController->IA_HERO_Look)
+			{
+				EI->BindAction(PlayerController->IA_HERO_Look, ETriggerEvent::Triggered, this, &AHERO_Character::Input_Look);
+				
+			}
+			else 
+			{
+				UE_LOG(LogTemp, Error, TEXT("Look X"));
+			}
 
-		// 가속/감속
-		if (IA_HERO_Accelerate)
-		{
-			// 누르는 동안 Triggered (true 유지)
-			EI->BindAction(IA_HERO_Accelerate, ETriggerEvent::Triggered, this, &AHERO_Character::Input_Accelerate);
-			// 뗄 때 Completed (false 전달)
-			EI->BindAction(IA_HERO_Accelerate, ETriggerEvent::Completed, this, &AHERO_Character::Input_Accelerate);
-		}
+			// 가속/감속
+			if (PlayerController->IA_HERO_Accelerate)
+			{
+				// 누르는 동안 Triggered (true 유지)
+				EI->BindAction(PlayerController->IA_HERO_Accelerate, ETriggerEvent::Triggered, this, &AHERO_Character::Input_Accelerate);
+				// 뗄 때 Completed (false 전달)
+				EI->BindAction(PlayerController->IA_HERO_Accelerate, ETriggerEvent::Completed, this, &AHERO_Character::Input_Accelerate);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Accelerate X"));
+			}
 
-		// 대쉬 스킬
-		if (IA_HERO_DashSkill)
-		{
-			EI->BindAction(IA_HERO_DashSkill, ETriggerEvent::Started, this, &AHERO_Character::Input_DashSkill);
+			// 대쉬 스킬
+			if (PlayerController->IA_HERO_DashSkill)
+			{
+				EI->BindAction(PlayerController->IA_HERO_DashSkill, ETriggerEvent::Started, this, &AHERO_Character::Input_DashSkill);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Dash X"));
+			}
 		}
 	}
 }

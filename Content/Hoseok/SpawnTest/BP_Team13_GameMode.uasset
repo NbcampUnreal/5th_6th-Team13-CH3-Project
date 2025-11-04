@@ -1,8 +1,3 @@
 version https://git-lfs.github.com/spec/v1
-<<<<<<< HEAD
-oid sha256:3b677286cfa6acfa81661807afe6fb714b07e05083d34dd9bfb3ec134f4cd672
-size 21312
-=======
-oid sha256:aababd115421544690fb2ed33e76c63d2589960fb361d2bbc88ec4be825f9995
-size 20952
->>>>>>> SungMin
+oid sha256:34b28360aa39e64650c23088ec9726c278706802a542d5889065ed19af8e48dc
+size 254
