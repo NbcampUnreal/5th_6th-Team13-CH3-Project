@@ -6,10 +6,9 @@
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
 
-
 ATeam13_GameState::ATeam13_GameState()
 {
-	StageDuration = 10.0f; //ÀÓ½Ã 10ÃÊ
+	StageDuration = 10.f;
 	CurrentStageIndex = 0;
 	MaxStageIndex = 2;
 }
@@ -154,6 +153,16 @@ void ATeam13_GameState::UpdateHUD()
 							LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), Team13_GameInstance->CurrentLevel)));
 						}
 						
+						//Timer Text
+						if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("TimeText"))))
+						{
+							float RemainingTime = GetWorldTimerManager().GetTimerRemaining(StageTimerHandle);
+
+							int32 DisplayTime = FMath::Max(0, FMath::CeilToInt(RemainingTime));
+
+							TimeText->SetText(FText::FromString(FString::Printf(TEXT("Time : %d"), DisplayTime)));
+						}
+
 						//HP Text
 						/*if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("HPText"))))
 						{
@@ -167,12 +176,12 @@ void ATeam13_GameState::UpdateHUD()
 						}
 						
 						//Stage Text
-						/*if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("StageText"))))
+						if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("StageText"))))
 						{
-							ExpText->SetText(FText::FromString(FString::Printf(TEXT("Stagt : %d"), )));
-						}*/
+							ExpText->SetText(FText::FromString(FString::Printf(TEXT("Stagt : %d"), CurrentStageIndex + 1)));
+						}
 						
-						//SpeedText
+						//Speed Text
 						/*if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("SpeedText"))))
 						{
 							LevelText->SetText(FText::FromString(FString::Printf(TEXT("%d"), )));
@@ -182,7 +191,5 @@ void ATeam13_GameState::UpdateHUD()
 			}
 		}
 	}
-
-	
 }
 
