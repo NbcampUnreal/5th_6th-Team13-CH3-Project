@@ -31,4 +31,7 @@ public:
 
     UPROPERTY(EditAnywhere, Config, Category = "Tuning")
     float DefaultSFXPitchBase = 1.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Blink")
+    FName BlinkScalarParam = TEXT("HitBlink");
 };
