@@ -6,6 +6,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 
+#include "CombatComponent.h"//충돌 데미지 함수
+
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
@@ -78,6 +80,8 @@ AHERO_Character::AHERO_Character()
 	DashTimer = 0.0f;
 	DashCooldown = 10.0f;
 	DashCooldownRemaining = 0.0f;
+
+	CombatComp = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComp"));
 }
 
 void AHERO_Character::BeginPlay()
@@ -112,6 +116,13 @@ void AHERO_Character::BeginPlay()
 				}
 			}
 		}
+	}
+
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+	{
+		Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		Capsule->SetNotifyRigidBodyCollision(true);
+		Capsule->OnComponentHit.AddDynamic(this, &AHERO_Character::OnCapsuleHit);
 	}
 }
 
@@ -302,26 +313,26 @@ void AHERO_Character::LevelUpInternal()
 /* -------------------------------------------------
  * HP 관련 공개 함수
  * ------------------------------------------------- */
-void AHERO_Character::ApplyDamage(float DamageAmount)
-{
-	if (DamageAmount <= 0.f) return;
-
-	const float OldHP = HP;
-	HP = FMath::Clamp(HP - DamageAmount, 0.f, MaxHP);
-
-	// HP가 실제로 바뀐 경우에만 알림
-	if (!FMath::IsNearlyEqual(OldHP, HP))
-	{
-		OnHPChanged.Broadcast(OldHP, HP, HP - OldHP);
-
-		// 사망(OldHP>0 → HP==0) 시 알림
-		if (OldHP > 0.f && HP <= 0.f)
-		{
-			OnHeroDeath.Broadcast();
-			// 사망 처리)를 여기에서 추가
-		}
-	}
-}
+//void AHERO_Character::ApplyDamage(float DamageAmount)
+//{
+//	if (DamageAmount <= 0.f) return;
+//
+//	const float OldHP = HP;
+//	HP = FMath::Clamp(HP - DamageAmount, 0.f, MaxHP);
+//
+//	// HP가 실제로 바뀐 경우에만 알림
+//	if (!FMath::IsNearlyEqual(OldHP, HP))
+//	{
+//		OnHPChanged.Broadcast(OldHP, HP, HP - OldHP);
+//
+//		// 사망(OldHP>0 → HP==0) 시 알림
+//		if (OldHP > 0.f && HP <= 0.f)
+//		{
+//			OnHeroDeath.Broadcast();
+//			// 사망 처리)를 여기에서 추가
+//		}
+//	}
+//}
 
 void AHERO_Character::Heal(float HealAmount)
 {
@@ -366,6 +377,9 @@ void AHERO_Character::Input_Look(const FInputActionValue& Value)
 	// 카메라 회전 = 컨트롤러 회전
 	AddControllerYawInput(LookAxis.X);
 	AddControllerPitchInput(LookAxis.Y);
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	bUseControllerRotationYaw = true;
+
 }
 
 // 대쉬 스킬 (IA_HERO_DashSkill)
@@ -391,4 +405,90 @@ void AHERO_Character::Input_DashSkill(const FInputActionValue& /*Value*/)
 	}
 
 	// 이미 Dashing이면 무시
+}
+
+void AHERO_Character::SyncSizeToScale() // 크기 증가 함수 - CSM
+{
+	//스케일 크기 고정
+	SetActorScale3D(FVector(1.0f));
+
+	//캡슐의 크기
+	const float BaseRadius = 42.f;
+	const float BaseHalf = 96.f;
+
+
+	UCapsuleComponent* Capsule = GetCapsuleComponent();
+	if (!Capsule)
+	{
+		return;
+	}
+	//캡슐 크기 증가
+	Capsule->SetCapsuleSize(BaseRadius * SizeScale, BaseHalf * SizeScale, true);
+
+
+	if (USkeletalMeshComponent* mesh = GetMesh())
+	{
+		//메시 크기 증가
+		mesh->SetRelativeScale3D(FVector(SizeScale));
+
+		//발 높이 보정
+		const float NewHalf = BaseHalf * SizeScale;
+		mesh->SetRelativeLocation(FVector(0, 0, -NewHalf));
+
+	}
+}
+
+void AHERO_Character::SetCurrentHealth(float NewValue)
+{
+	HP = NewValue;
+	if (HP <= 0.f)
+	{
+		OnDead();
+	}
+}
+
+
+void AHERO_Character::EnableRagdollAndImpulse(const FVector& Impulse)
+{
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		if (!MeshComp->IsSimulatingPhysics())
+		{
+			MeshComp->SetSimulatePhysics(true);
+			MeshComp->SetCollisionProfileName(TEXT("Ragdoll"));
+			if (UCapsuleComponent* Cap = GetCapsuleComponent())
+			{
+				Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+		}
+		MeshComp->AddImpulse(Impulse, NAME_None, true);
+	}
+}
+
+void AHERO_Character::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* Other,
+	UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (!Other || !CombatComp) return;
+
+	TScriptInterface<IHitDamageable> Me(this);
+	TScriptInterface<IHitDamageable> Target(Other);
+	if (!Me || !Target) return;
+
+	const FRoleDecision R = CombatComp->DecideRoles(Me, Target, /*bIgnoreLevel=*/false);
+	if (!R.bValid) return;
+
+	AActor* AttackerActor = Cast<AActor>(R.Attacker.GetObject());
+	AActor* DefenderActor = Cast<AActor>(R.Defender.GetObject());
+	if (!AttackerActor || !DefenderActor) return;
+
+	FVector Dir = DefenderActor->GetActorLocation() - AttackerActor->GetActorLocation();
+	if (Dir.IsNearlyZero()) { Dir = AttackerActor->GetActorForwardVector(); }
+	Dir = Dir.GetSafeNormal();
+
+	CombatComp->ApplyImpactDamage(R.Attacker, R.Defender, Dir);
+
+	if (DefenderActor == this)
+	{
+		CombatComp->ApplyCollisionFeedbackForDefender(Me, AttackerActor, Hit);
+	}
 }
