@@ -399,3 +399,55 @@ void UCombatComponent::PlayHitEffects(AActor* DefenderActor, float Impact, const
         }
     }
 }
+
+void UCombatComponent::ForEachMesh(AActor* Target, TFunctionRef<void(UMeshComponent*)> Fn)
+{
+    if (!Target) return;
+    TInlineComponentArray<UMeshComponent*> Meshes;
+    Target->GetComponents(Meshes);
+    for (UMeshComponent* M : Meshes)
+    {
+        if (IsValid(M) && M->GetNumMaterials() > 0)
+        {
+            Fn(M);
+        }
+    }
+}
+
+void UCombatComponent::EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, float Value) const
+{
+    const int32 Num = Mesh->GetNumMaterials();
+    for (int32 i = 0; i < Num; ++i)
+    {
+        UMaterialInterface* Mat = Mesh->GetMaterial(i);
+        UMaterialInstanceDynamic* MID = Cast<UMaterialInstanceDynamic>(Mat);
+        if (!MID)
+        {
+            MID = Mesh->CreateAndSetMaterialInstanceDynamic(i);
+        }
+        if (MID)
+        {
+            MID->SetScalarParameterValue(Param, Value);
+        }
+    }
+}
+
+void UCombatComponent::SetBlink(AActor* Target, bool bOn) const
+{
+    if (!Target) return;
+
+    // 전용 서버에서는 연출 건너뜀
+    if (const UWorld* W = Target->GetWorld())
+    {
+        if (W->IsNetMode(NM_DedicatedServer)) return;
+    }
+
+    BlinkStateMap.FindOrAdd(Target) = bOn;
+
+    const FName ParamName = Feedback.BlinkScalarParam.IsNone() ? FName(TEXT("HitBlink")) : Feedback.BlinkScalarParam;
+
+    ForEachMesh(Target, [this, ParamName, bOn](UMeshComponent* Mesh)
+        {
+            EnsureMidAndSetScalar(Mesh, ParamName, bOn ? 1.0f : 0.0f);
+        });
+}
