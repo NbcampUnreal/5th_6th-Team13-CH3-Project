@@ -18,12 +18,4 @@ public :
 
 	virtual void BeginPlay() override;
 
-	UPROPERTY(BlueprintReadOnly)
-	int32 EnemyToSpawn; // 총 스폰 예정 수
-
-	UPROPERTY(BlueprintReadOnly)
-	int32 EnemySpawned; // 지금까지 스폰된 적 수
-
-	UPROPERTY(BlueprintReadOnly)
-	int32 EnemyAlive; // 현재 살아있는 적 수
 };

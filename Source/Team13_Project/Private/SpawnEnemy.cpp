@@ -15,6 +15,22 @@ ASpawnEnemy::ASpawnEnemy()
 	SpawningSphere->SetupAttachment(Scene);
 
 	EnemyDataTable = nullptr;
+
+	EnemyToSpawn = 5;
+
+	EnemySpawned = 0;
+
+	EnemyAlive = 0;
+
+	bCanSpawn = true;
+}
+
+void ASpawnEnemy::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Overlap 이벤트 바인딩
+	SpawningSphere->OnComponentBeginOverlap.AddDynamic(this, &ASpawnEnemy::OnOverlapBegin);
 }
 
 FEnemySpawnRow* ASpawnEnemy::GetRandomEnemy() const
@@ -60,12 +76,50 @@ FVector ASpawnEnemy::GetRandomPointInVolume_Sphere() const
 	return FVector(Origin.X + RandomPoint.X, Origin.Y + RandomPoint.Y, Origin.Z);
 }
 
-// Object Pool을 사용한 Spawn
+//Overlap할 경우 적 생성
+void ASpawnEnemy::OnOverlapBegin(
+	UPrimitiveComponent* OverlappedComp,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult)
+{
+	if (!bCanSpawn) return; // 10초 제한 중에는 작동하지 못하게 함
+
+	bCanSpawn = false; // 한 번 스폰 후 비활성화 -> 이유 : Overlap이 계속 반복됨
+
+	// 여기서 바로 적 생성
+	for (int32 i = 0; i < EnemyToSpawn; i++)
+	{
+		AActor* SpawnedActor = SpawnRandomEnemy();
+		if (SpawnedActor)
+		{
+			EnemySpawned++;
+			EnemyAlive++;
+		}
+	}
+
+	//10초 후 다시 활성화
+	GetWorld()->GetTimerManager().SetTimer(
+		SpawnCooldownTimerHandle,
+		this,
+		&ASpawnEnemy::ResetSpawnState,
+		10.0f, 
+		false  
+	);
+}
+
+void ASpawnEnemy::ResetSpawnState()
+{
+	bCanSpawn = true;
+}
+
+//Object Pool을 사용한 Spawn
 AActor* ASpawnEnemy::SpawnEnemy(TSubclassOf<AActor> EnemyClass)
 {
 	if (!EnemyClass) return nullptr;
 
-	// World Subsystem에서 PoolManager 가져오기
 	UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
 	if (!PoolManager)
 	{
