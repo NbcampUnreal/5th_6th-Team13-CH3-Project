@@ -41,6 +41,19 @@ void AAiTestMonster::BeginPlay()
 	Movement->MaxWalkSpeed = WalkSpeed;
 	UE_LOG(LogTemp, Warning, TEXT("AI Test Spawned"));
 
+
+	AICon = Cast<AAIController>(GetController());
+	if (!AICon)
+	{	UE_LOG(LogTemp, Warning, TEXT("AI Controller missing"));
+		return;
+	}
+	BB = AICon->GetBlackboardComponent();
+	if (!BB)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AI BlackBoard missing"));
+		return;
+	}
+
 	// ===========================
 	// 아웃라인 관련 로직 (BeginPlay에 추가)
 	// ===========================
@@ -65,17 +78,7 @@ void AAiTestMonster::BeginPlay()
 void AAiTestMonster::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	AAIController* AICon = Cast<AAIController>(GetController());
-	if (!AICon)
-	{	UE_LOG(LogTemp, Warning, TEXT("AI Controller missing"));
-		return;
-	}
-	UBlackboardComponent* BB = AICon->GetBlackboardComponent();
-	if (!BB)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("AI BlackBoard missing"));
-		return;
-	}
+	
 	//UE_LOG(LogTemp, Warning, TEXT("AI Control/BlackBoard allright"));
 	bool bIsRunning = BB->GetValueAsBool(TEXT("IsRunning"));
 
@@ -86,11 +89,52 @@ void AAiTestMonster::Tick(float DeltaTime)
 		//UE_LOG(LogTemp, Warning, TEXT("AI Speed Set"));
 		MoveComp->MaxWalkSpeed = TargetSpeed;
 	}
+
+	if (PlayerCharacter && GetMesh() && DesiredStencilValue >= 0)
+	{
+		APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
+		if (!CameraManager)
+		{
+			GetMesh()->SetRenderCustomDepth(false); 
+			return;
+		}
+
+		const FVector CameraLocation = CameraManager->GetCameraLocation();
+		const FVector MonsterLocation = GetActorLocation(); 
+
+		FHitResult HitResult;
+		FCollisionQueryParams Params;
+		Params.AddIgnoredActor(this); 
+		Params.AddIgnoredActor(PlayerCharacter); 
+
+		// 카메라에서 몬스터로 라인 트레이스 (Visibility 채널 사용)
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			CameraLocation,
+			MonsterLocation,
+			ECC_Visibility,
+			Params
+		);
+
+		if (bHit)
+		{
+			// 장애물 있음
+			GetMesh()->SetRenderCustomDepth(false);
+		}
+		else
+		{
+			// 장애물 없음
+			GetMesh()->SetRenderCustomDepth(true);
+			GetMesh()->SetCustomDepthStencilValue(DesiredStencilValue);
+		}
+	}
+	else if (GetMesh())
+	{
+		GetMesh()->SetRenderCustomDepth(false);
+	}
 }
 
-// ===========================
-// 아웃라인 업데이트 함수 (새로 추가)
-// ===========================
+
 
 void AAiTestMonster::UpdateOutlineByPlayerLevel()
 {
@@ -107,25 +151,36 @@ void AAiTestMonster::UpdateOutlineByPlayerLevel()
 	}
 
 	const int32 PlayerLevel = PlayerCharacter->GetHeroLevel();
-	const int32 MonsterLevel = GetLevel(); // BaseMonsterCharacter로부터 레벨을 가져옴
+	const int32 MonsterLevel = GetLevel(); 
 
-	// 포스트 프로세스 머티리얼에서 사용할 스텐실 값입니다.
-	// 이 값들은 머티리얼에서 실제로 사용하는 값과 일치해야 합니다.
-	const int32 STENCIL_RED_OUTLINE = 2;  // 예: 몬스터 레벨이 더 높을 때
-	const int32 STENCIL_BLUE_OUTLINE = 0; // 예: 플레이어 레벨이 같거나 높을 때
-
+	const int32 STENCIL_RED_OUTLINE = 255;   // 높을때 (빨강)
+	const int32 STENCIL_GREEN_OUTLINE = 128; // 같을때 (초록)
+	const int32 STENCIL_BLUE_OUTLINE = 0;  // 낮을때 (파랑)
+	
 	if (MonsterLevel > PlayerLevel)
 	{
 		// 몬스터 레벨이 더 높음 -> 빨간색 아웃라인
 		GetMesh()->SetRenderCustomDepth(true);
 		GetMesh()->SetCustomDepthStencilValue(STENCIL_RED_OUTLINE);
+		BB->SetValueAsBool(TEXT("IsUpperLevel"), true);
+		DesiredStencilValue = STENCIL_RED_OUTLINE;
 		UE_LOG(LogTemp, Log, TEXT("Outline: RED (Monster: %d > Player: %d)"), MonsterLevel, PlayerLevel);
 	}
-	else
+	else if (MonsterLevel == PlayerLevel)
 	{
-		// 몬스터 레벨이 같거나 낮음 -> 파란색 아웃라인
+		// 몬스터 레벨이 같거나 낮음 -> 초록색 아웃라인
+		GetMesh()->SetRenderCustomDepth(true);
+		GetMesh()->SetCustomDepthStencilValue(STENCIL_GREEN_OUTLINE);
+		BB->SetValueAsBool(TEXT("IsUpperLevel"), false);
+		DesiredStencilValue = STENCIL_GREEN_OUTLINE;
+		UE_LOG(LogTemp, Log, TEXT("Outline: Green (Monster: %d <= Player: %d)"), MonsterLevel, PlayerLevel);
+	}else
+	{
+		// 몬스터가 허접임 -> 파란색 아웃라인
 		GetMesh()->SetRenderCustomDepth(true);
 		GetMesh()->SetCustomDepthStencilValue(STENCIL_BLUE_OUTLINE);
+		BB->SetValueAsBool(TEXT("IsUpperLevel"), false);
+		DesiredStencilValue = STENCIL_BLUE_OUTLINE;
 		UE_LOG(LogTemp, Log, TEXT("Outline: BLUE (Monster: %d <= Player: %d)"), MonsterLevel, PlayerLevel);
 	}
 }

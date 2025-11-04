@@ -55,6 +55,7 @@ void ATestAIController::BeginPlay()
 	Super::BeginPlay();
 
 	AIPerception->OnTargetPerceptionUpdated.AddDynamic(this, &ATestAIController::OnPerceptionUpdated);
+	
 	if (BlackboardComp)
 	{
 		// 초기값 설정 – 시작할 때 Blackboard에 값 미리 넣어둠
