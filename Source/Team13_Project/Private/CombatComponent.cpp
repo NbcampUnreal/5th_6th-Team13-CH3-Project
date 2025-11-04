@@ -13,6 +13,10 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "CombatFeedbackSettings.h"
+#include "Components/MeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Engine/World.h"
+
 
 
 static void OrderPair(FRoleDecision& Out,
@@ -394,4 +398,14 @@ void UCombatComponent::PlayHitEffects(AActor* DefenderActor, float Impact, const
             }
         }
     }
+}
+
+void UCombatComponent::ForEachMesh(AActor* Target, TFunctionRef<void(UMeshComponent*)>  Fn)
+{
+    if (!Target)
+        return;
+
+    TInl
+
+
 }
