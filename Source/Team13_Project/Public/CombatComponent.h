@@ -179,9 +179,7 @@ private:
 	mutable TMap<TWeakObjectPtr<AActor>, FTimerHandle> BlinkTimerMap;
 
 	bool IsInvincible(AActor* Target) const;
-	void StartInvincibility(AActor* Target, float Duration) const;
-	void EndInvincibility(AActor* Target) const;
-	void ToggleBlink(AActor* Target) const;
+	
 
 	
 	static void ForEachPrimitive(AActor* Target, TFunctionRef<void(UPrimitiveComponent*)> Fn);

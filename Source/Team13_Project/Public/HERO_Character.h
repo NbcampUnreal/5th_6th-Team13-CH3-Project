@@ -228,8 +228,8 @@ public:
 	int32 GetHeroLevel() const { return Level; }
 
 	// 피해 입기
-	UFUNCTION(BlueprintCallable, Category = "HP")
-	void ApplyDamage(float DamageAmount);
+	/*UFUNCTION(BlueprintCallable, Category = "HP")
+	void ApplyDamage(float DamageAmount);*/
 
 	// 회복
 	UFUNCTION(BlueprintCallable, Category = "HP")

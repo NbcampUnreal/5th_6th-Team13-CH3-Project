@@ -137,12 +137,12 @@ void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>&
     Defender->SetCurrentHealth(NewHP);
 
 
-    StartInvincibility(DefenderActor, Feedback.InvincibleDuration);
+    
 
     if (NewHP <= 0.f)
     {
 
-        EndInvincibility(DefenderActor);
+        
 
         Defender->OnDead();
         const FVector Impulse = ImpactDirection.GetSafeNormal() * Settings.RagdollImpulseScale * FMath::Max(1.f, Attacker->GetSizeScale());
@@ -161,8 +161,7 @@ void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& 
     const float NewHP = FMath::Max(Target->GetCurrentHealth() - FMath::Max(Damage, 0.f), 0.f);
 
     Target->SetCurrentHealth(NewHP);
-    StartInvincibility(TargetActor, Feedback.InvincibleDuration);
-
+    
     if (NewHP <= 0.f)
     {
         Target->OnDead();
@@ -307,71 +306,6 @@ bool UCombatComponent::IsInvincible(AActor* Target) const
     if (!Target) return false;
     if (const bool* bInv = InvincibleMap.Find(Target)) return *bInv;
     return false;
-}
-
-void UCombatComponent::StartInvincibility(AActor* Target, float Duration) const
-{
-    if (!Target) return;
-
-
-    if (UWorld* W = Target->GetWorld())
-    {
-        // 무적 종료 타이머
-        FTimerHandle EndHandle;
-        W->GetTimerManager().SetTimer( EndHandle,[this, Target]() { EndInvincibility(Target); },FMath::Max(Duration, 0.f),false);
-
-        // 깜빡임 시작
-        if (Feedback.bBlinkUsingCustomDepth && Feedback.BlinkInterval > 0.f)
-        {
-            // 먼저 꺼진 상태로 초기화(마지막에 확실히 꺼지도록)
-            ForEachPrimitive(Target, [](UPrimitiveComponent* P)
-                {
-                    if (P) P->SetRenderCustomDepth(false);
-                });
-
-            // 반복 타이머로 토글
-            FTimerHandle& BlinkHandle = BlinkTimerMap.FindOrAdd(Target);
-            W->GetTimerManager().SetTimer( BlinkHandle,[this, Target]() { ToggleBlink(Target); },Feedback.BlinkInterval,true);
-        }
-    }
-}
-
-void UCombatComponent::EndInvincibility(AActor* Target) const
-{
-    if (!Target) return;
-
-    InvincibleMap.Remove(Target);
-
-    // 깜빡임 정지 및 초기화
-    if (UWorld* W = Target->GetWorld())
-    {
-        if (FTimerHandle* Handle = BlinkTimerMap.Find(Target))
-        {
-            W->GetTimerManager().ClearTimer(*Handle);
-            BlinkTimerMap.Remove(Target);
-        }
-    }
-
-    // CustomDepth를 꺼서 원복
-    if (Feedback.bBlinkUsingCustomDepth)
-    {
-        ForEachPrimitive(Target, [](UPrimitiveComponent* P)
-            {
-                if (P) P->SetRenderCustomDepth(false);
-            });
-    }
-}
-
-void UCombatComponent::ToggleBlink(AActor* Target) const
-{
-    if (!Target) return;
-
-    ForEachPrimitive(Target, [](UPrimitiveComponent* P)
-        {
-            if (!P) return;
-            const bool bNow = P->bRenderCustomDepth;
-            P->SetRenderCustomDepth(!bNow);
-        });
 }
 
 
