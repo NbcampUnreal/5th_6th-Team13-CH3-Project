@@ -69,6 +69,7 @@ void ATeam13_GameState::StartStage()
 			CurrentStageIndex = Team13_GameInstance->CurrentStageIndex;
 		}
 	}
+	// 바인딩을 스타트 게임으로 이동, 기존의 beginplay때는 아직 플레이어가 맵에 없다.
 	HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (HERO_Character != nullptr)
 	{

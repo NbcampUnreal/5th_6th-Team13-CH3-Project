@@ -31,6 +31,8 @@ public:
 
 	void StartStage();
 	void EndStage();
+
+	//dynamic delegate에 바인딩된 함수는 언리얼엔진이 참조해서 호출하기때문에 ufunction이 필수
 	UFUNCTION()
 	void OnGameOver();
 	void UpdateHUD();
