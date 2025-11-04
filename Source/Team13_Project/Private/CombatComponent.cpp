@@ -399,13 +399,3 @@ void UCombatComponent::PlayHitEffects(AActor* DefenderActor, float Impact, const
         }
     }
 }
-
-void UCombatComponent::ForEachMesh(AActor* Target, TFunctionRef<void(UMeshComponent*)>  Fn)
-{
-    if (!Target)
-        return;
-
-    TInl
-
-
-}

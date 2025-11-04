@@ -5,9 +5,15 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 
 ATeam13_PlayerController::ATeam13_PlayerController()
-	: HUDWidgetClass(nullptr),
+	: IMC_HERO(nullptr),
+	IA_HERO_Look(nullptr),
+	IA_HERO_Accelerate(nullptr),
+	IA_HERO_DashSkill(nullptr),
+	HUDWidgetClass(nullptr),
 	HUDWidgetInstance(nullptr),
 	MainMenuWidgetClass(nullptr),
 	MainMenuWidgetInstance(nullptr),
@@ -31,6 +37,18 @@ void ATeam13_PlayerController::BeginPlay()
 	if (CurrentMapName.Contains("StartMenu"))
 	{
 		ShowStartMenu();
+	}
+
+	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+			LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+		{
+			if (IMC_HERO)
+			{
+				Subsystem->AddMappingContext(IMC_HERO, 0);
+			}
+		}
 	}
 }
 
@@ -186,7 +204,7 @@ void ATeam13_PlayerController::ShowGameHUD()
 		{
 			HUDWidgetInstance->AddToViewport();
 			bShowMouseCursor = false;			//마우스 커서X
-			SetInputMode(FInputModeUIOnly());
+			SetInputMode(FInputModeGameOnly());
 
 			ATeam13_GameState* GameState = GetWorld() ? GetWorld()->GetGameState<ATeam13_GameState>() : nullptr;
 			if (GameState)
@@ -195,11 +213,24 @@ void ATeam13_PlayerController::ShowGameHUD()
 			}
 		}
 	}
+
+	//if (MainMenuWidgetClass)
+	//{
+	//	MainMenuWidgetInstance = CreateWidget<UUserWidget>(this, MainMenuWidgetClass);
+	//	if (MainMenuWidgetInstance)
+	//	{
+	//		MainMenuWidgetInstance->AddToViewport();
+	//		//마우스 커서 UI
+	//		bShowMouseCursor = true;
+	//		SetInputMode(FInputModeUIOnly());
+	//	}
+	//}
 }
 
 //게임시작
 void ATeam13_PlayerController::StartGame()
 {
+
 	if (UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
 	{
 		Team13_GameInstance->CurrentStageIndex = 0;
