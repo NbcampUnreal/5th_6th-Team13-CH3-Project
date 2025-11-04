@@ -18,7 +18,7 @@ public class Team13_Project : ModuleRules
 			"AIModule",
 			"GameplayTasks",
 			"NavigationSystem",
-			"Niagara",
+			"UMG",
 			"DeveloperSettings",
             "Niagara"
         });
