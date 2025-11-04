@@ -30,8 +30,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHeroDeath);
 
 class USpringArmComponent;
 class UCameraComponent;
-class UInputMappingContext;
-class UInputAction;
+//class UInputMappingContext;
+//class UInputAction;
 class UCharacterMovementComponent;
 class UCombatComponent;
 
@@ -97,17 +97,17 @@ public:
 	 *  Enhanced Input 설정
 	 * =========================== */
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputMappingContext* IMC_HERO;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputMappingContext* IMC_HERO;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* IA_HERO_Look;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputAction* IA_HERO_Look;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* IA_HERO_Accelerate;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputAction* IA_HERO_Accelerate;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* IA_HERO_DashSkill;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputAction* IA_HERO_DashSkill;
 
 	/* ===========================
 	 *  이동/가속 관련 스탯
