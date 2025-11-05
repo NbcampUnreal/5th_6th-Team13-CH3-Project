@@ -136,6 +136,9 @@ void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>&
     if (IsInvincible(DefenderActor))
         return;
 
+
+
+
     const float Dmg = FMath::Max(ComputeImpactDamage(Attacker, Defender), 0.f);
     const float NewHP = FMath::Max(Defender->GetCurrentHealth() - Dmg, 0.f);
     Defender->SetCurrentHealth(NewHP);
@@ -221,11 +224,17 @@ FVector UCombatComponent::MakeBounceDirFromAttacker(const AActor* Attacker, floa
 
 void UCombatComponent::ApplyCollisionFeedbackForDefender(const TScriptInterface<IHitDamageable>& Defender, AActor* Attacker, const FHitResult& Hit)
 {
+
+
     if (!Defender || !Attacker || Defender->IsDead())
         return;
 
-    AActor* Def = Cast<AActor>(Defender.GetObject()); 
+   
 
+    AActor* Def = Cast<AActor>(Defender.GetObject()); 
+    if (IsInvincible(Def)) return;
+
+    StartInvincibility(Def);
     if (!Def)
         return;
 
@@ -440,4 +449,93 @@ void UCombatComponent::EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, 
             MID->SetScalarParameterValue(Param, Value);
         }
     }
+}
+
+void UCombatComponent::SetBlink(AActor* Target, bool bOn) const
+{
+    if (!Target) return;
+
+   
+    if (const UWorld* W = Target->GetWorld())
+    {
+        if (W->IsNetMode(NM_DedicatedServer)) return;
+    }
+
+    BlinkStateMap.FindOrAdd(Target) = bOn;
+
+    const FName ParamName = Feedback.BlinkScalarParam.IsNone()
+        ? FName(TEXT("HitBlink"))
+        : Feedback.BlinkScalarParam;
+
+    ForEachMesh(Target, [this, ParamName, bOn](UMeshComponent* Mesh)
+        {
+            EnsureMidAndSetScalar(Mesh, ParamName, bOn ? 1.0f : 0.0f);
+        });
+}
+
+void UCombatComponent::ToggleBlink(AActor* Target) const
+{
+    const bool* Cur = BlinkStateMap.Find(Target);
+    const bool NewState = !(Cur && *Cur);
+    SetBlink(Target, NewState);
+}
+
+void UCombatComponent::StartInvincibility(AActor* Target) const
+{
+    if (!Target) return;
+    UWorld* W = Target->GetWorld();
+    if (!W) return;
+
+    InvincibleMap.FindOrAdd(Target) = true;
+
+    // 첫 프레임에 켠다
+    SetBlink(Target, true);
+
+    // 깜빡임 타이머 (간격마다 on/off 토글)
+    if (Feedback.BlinkInterval > 0.f)
+    {
+        FTimerHandle& BlinkTh = BlinkTimerMap.FindOrAdd(Target);
+        W->GetTimerManager().SetTimer(
+            BlinkTh,
+            FTimerDelegate::CreateWeakLambda(this, [this, Target]()
+                {
+                    if (!IsValid(Target)) return;
+                    ToggleBlink(Target);
+                }),
+            Feedback.BlinkInterval,
+            true
+        );
+    }
+
+    // 무적 종료 타이머
+    FTimerHandle EndTh;
+    W->GetTimerManager().SetTimer(
+        EndTh,
+        FTimerDelegate::CreateWeakLambda(this, [this, Target]()
+            {
+                StopInvincibility(Target);
+            }),
+        Feedback.InvincibleDuration,
+        false
+    );
+}
+
+void UCombatComponent::StopInvincibility(AActor* Target) const
+{
+    if (!Target) return;
+    UWorld* W = Target->GetWorld();
+    if (!W) return;
+
+    InvincibleMap.Remove(Target);
+
+    // 깜빡임 타이머 해제
+    if (FTimerHandle* BlinkTh = BlinkTimerMap.Find(Target))
+    {
+        W->GetTimerManager().ClearTimer(*BlinkTh);
+        BlinkTimerMap.Remove(Target);
+    }
+
+    // 확실하게 끄기
+    SetBlink(Target, false);
+    BlinkStateMap.Remove(Target);
 }
