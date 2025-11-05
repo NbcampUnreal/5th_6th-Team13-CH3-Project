@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HERO_Character.h"
 #include "GameFramework/GameState.h"
 #include "Team13_GameState.generated.h"
 
@@ -12,7 +13,7 @@ public:
 	ATeam13_GameState();
 
 	virtual void BeginPlay() override;
-
+	virtual void PostInitializeComponents() override;
 	//int32 EnemyToSpawn;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stage")
@@ -26,8 +27,11 @@ public:
 	FTimerHandle StageTimerHandle;
 	FTimerHandle HUDUpdateTimerHandle;
 
+	AHERO_Character* HERO_Character;
+
 	void StartStage();
 	void EndStage();
+	UFUNCTION()
 	void OnGameOver();
 	void UpdateHUD();
 	void OnStageTimeUp();

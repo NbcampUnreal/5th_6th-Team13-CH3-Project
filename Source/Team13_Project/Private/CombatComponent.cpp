@@ -154,7 +154,7 @@ void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>&
     }
 }
 
-void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,  float Damage,const FVector& HitImpulseDir) const
+void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,  float Damage,const FVector& HitImpulseDir) 
 {
     if (!Target || Target->IsDead())
         return;
@@ -174,7 +174,17 @@ void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& 
         Target->EnableRagdollAndImpulse(HitImpulseDir.GetSafeNormal() * Settings.RagdollImpulseScale);
     }
 }
-
+void UCombatComponent::ApplyFixedDamage_BP(AActor* TargetActor, float Damage, const FVector& HitImpulseDir)
+{
+    if (!TargetActor) return;
+    if (TargetActor->GetClass()->ImplementsInterface(UHitDamageable::StaticClass()))
+    {
+        TScriptInterface<IHitDamageable> TargetIntf;
+        TargetIntf.SetObject(TargetActor);
+        TargetIntf.SetInterface(Cast<IHitDamageable>(TargetActor));
+        ApplyFixedDamage(TargetIntf, Damage, HitImpulseDir);
+    }
+}
 void UCombatComponent::ApplyInstantKill(const TScriptInterface<IHitDamageable>& Target,const FVector& HitImpulseDir) const
 {
     if (!Target || Target->IsDead()) return;
@@ -396,6 +406,38 @@ void UCombatComponent::PlayHitEffects(AActor* DefenderActor, float Impact, const
             {
                 NC->SetFloatParameter(TEXT("ImpactStrength"), T);
             }
+        }
+    }
+}
+
+void UCombatComponent::ForEachMesh(AActor* Target, TFunctionRef<void(UMeshComponent*)> Fn)
+{
+    if (!Target) return;
+    TInlineComponentArray<UMeshComponent*> Meshes;
+    Target->GetComponents(Meshes);
+    for (UMeshComponent* M : Meshes)
+    {
+        if (IsValid(M) && M->GetNumMaterials() > 0)
+        {
+            Fn(M);
+        }
+    }
+}
+
+void UCombatComponent::EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, float Value) const
+{
+    const int32 Num = Mesh->GetNumMaterials();
+    for (int32 i = 0; i < Num; ++i)
+    {
+        UMaterialInterface* Mat = Mesh->GetMaterial(i);
+        UMaterialInstanceDynamic* MID = Cast<UMaterialInstanceDynamic>(Mat);
+        if (!MID)
+        {
+            MID = Mesh->CreateAndSetMaterialInstanceDynamic(i);
+        }
+        if (MID)
+        {
+            MID->SetScalarParameterValue(Param, Value);
         }
     }
 }

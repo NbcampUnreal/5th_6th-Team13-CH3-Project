@@ -54,6 +54,8 @@ struct FHitFeedbackSettings
 	UPROPERTY(EditAnywhere) 
 	float ImpactMax = 1200.f;
 
+	UPROPERTY(EditAnywhere, Category = "Blink")
+	FName BlinkScalarParam = TEXT("HitBlink");
 
 	// ====== [추가] 무적/블링크 ======
 	// 충돌 후 부여할 무적 시간(초)
@@ -151,7 +153,7 @@ public:
 
 	// 고정 데미지(돌진/투척)
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,float Damage,const FVector& HitImpulseDir) const;
+	void ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,float Damage,const FVector& HitImpulseDir) ;
 
 	// 즉사(특수 원거리, 트랩 등)
 	UFUNCTION(BlueprintCallable, Category = "Combat")
@@ -166,7 +168,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Setup")
 	void InitializeComponent();
-
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ApplyFixedDamage_BP(AActor* TargetActor, float Damage, const FVector& HitImpulseDir);
 
 
 private:
@@ -186,11 +189,11 @@ private:
 	void ToggleBlink(AActor* Target) const;              // on/off 토글
 	void SetBlink(AActor* Target, bool bOn) const;       // 명시 on/off
 
-	// 액터의 UMeshComponent 전부 순회 유틸
-	//static void ForEachMesh(AActor* Target, TFunctionRef<void(UMeshComponent*)> Fn);
+	 //
+	static void ForEachMesh(AActor* Target, TFunctionRef<void(UMeshComponent*)> Fn);
 
-	// 한 MeshComponent의 모든 머티리얼 슬롯을 MID로 보장하고 파라미터 설정
-	//void EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, float Value) const;
+	 //
+	void EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, float Value) const;
 
 	bool IsInvincible(AActor* Target) const;
 	

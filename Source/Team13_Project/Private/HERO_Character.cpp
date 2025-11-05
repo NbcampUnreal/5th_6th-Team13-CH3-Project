@@ -455,6 +455,7 @@ void AHERO_Character::SyncSizeToScale() // 크기 증가 함수 - CSM
 	}
 }
 
+//사용 안함
 void AHERO_Character::SetCurrentHealth(float NewValue)
 {
 	HP = NewValue;
