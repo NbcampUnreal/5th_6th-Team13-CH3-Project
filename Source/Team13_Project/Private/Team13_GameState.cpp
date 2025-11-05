@@ -1,6 +1,7 @@
 #include "Team13_GameState.h"
 #include "Team13_PlayerController.h"
 #include "Team13_GameInstance.h"
+#include "HERO_Character.h"
 #include "SpawnEnemy.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextBlock.h"
@@ -170,28 +171,13 @@ void ATeam13_GameState::UpdateHUD()
 					UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(GameInstance);
 					if (Team13_GameInstance)
 					{
-						//PlayerLevel Text
-						if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("LevelText"))))
-						{
-							LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), Team13_GameInstance->CurrentLevel)));
-						}
-						
 						//Timer Text
 						if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("TimeText"))))
 						{
 							float RemainingTime = GetWorldTimerManager().GetTimerRemaining(StageTimerHandle);
-
-							int32 DisplayTime = FMath::Max(0, FMath::CeilToInt(RemainingTime));
-
-							TimeText->SetText(FText::FromString(FString::Printf(TEXT("Time : %d"), DisplayTime)));
+							TimeText->SetText(FText::FromString(FString::Printf(TEXT("Time : %0.f"), RemainingTime)));
 						}
 
-						//HP Text
-						/*if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("HPText"))))
-						{
-							ExpText->SetText(FText::FromString(FString::Printf(TEXT("%d"), )));
-						}*/
-						
 						//Exp Text
 						if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("ExpText"))))
 						{
@@ -203,12 +189,30 @@ void ATeam13_GameState::UpdateHUD()
 						{
 							ExpText->SetText(FText::FromString(FString::Printf(TEXT("Stagt : %d"), CurrentStageIndex + 1)));
 						}
-						
-						//Speed Text
-						/*if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("SpeedText"))))
+					}
+					ACharacter* Character = PlayerController->GetCharacter();
+					if (AHERO_Character* HeroCharacter = Cast<AHERO_Character>(Character))
+					{
+						if (HeroCharacter)
 						{
-							LevelText->SetText(FText::FromString(FString::Printf(TEXT("%d"), )));
-						}*/
+							//Speed Text
+							if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("SpeedText"))))
+							{
+								LevelText->SetText(FText::FromString(FString::Printf(TEXT("%0.f"), HeroCharacter->CURRENT_V)));
+							}
+
+							//HP Text
+							if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("HPText"))))
+							{
+								ExpText->SetText(FText::FromString(FString::Printf(TEXT("%0.f"), HeroCharacter->HP)));
+							}
+
+							//PlayerLevel Text
+							if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("LevelText"))))
+							{
+								LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level)));
+							}
+						}
 					}
 				}
 			}

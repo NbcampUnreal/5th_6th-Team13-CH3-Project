@@ -34,8 +34,6 @@ public:
 	UFUNCTION()
 	void OnGameOver();
 	void UpdateHUD();
-	
-	//юс╫ц
 	void OnStageTimeUp();
 
 	float StageDuration;
