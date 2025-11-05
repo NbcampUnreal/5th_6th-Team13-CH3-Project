@@ -13,7 +13,7 @@ public:
 	ATeam13_GameState();
 
 	virtual void BeginPlay() override;
-
+	virtual void PostInitializeComponents() override;
 	//int32 EnemyToSpawn;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stage")

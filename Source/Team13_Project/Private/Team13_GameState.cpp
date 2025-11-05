@@ -37,8 +37,13 @@ void ATeam13_GameState::BeginPlay()
 		}
 	}*/
 	StartStage();
+
 	HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	
+	if (HERO_Character)
+	{
+		HERO_Character->OnHeroDeath.AddDynamic(this, &ATeam13_GameState::OnGameOver);
+	}
+
 	GetWorldTimerManager().SetTimer(
 		HUDUpdateTimerHandle,
 		this,
@@ -47,19 +52,20 @@ void ATeam13_GameState::BeginPlay()
 		true);
 }
 
+void ATeam13_GameState::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+}
+
 void ATeam13_GameState::StartStage()
 {
+	//HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
 		{
 			Team13_PlayerController->ShowGameHUD();
 		}
-	}
-
-	if (HERO_Character) 
-	{
-		HERO_Character->OnHeroDeath.AddDynamic(this, &ATeam13_GameState::OnGameOver);
 	}
 	
 	if(UGameInstance * GameInstance = GetGameInstance())
@@ -139,7 +145,12 @@ void ATeam13_GameState::OnGameOver()
 			}*/
 			if (HERO_Character->IsDead())
 			{
+				UE_LOG(LogTemp, Error, TEXT("Death"));
 				Team13_PlayerController->ShowEndMenu(true);
+			}
+			else 
+			{
+				UE_LOG(LogTemp, Error, TEXT("Failed Death"));
 			}
 
 		}
