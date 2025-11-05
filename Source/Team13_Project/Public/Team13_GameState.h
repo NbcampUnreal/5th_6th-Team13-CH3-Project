@@ -13,7 +13,7 @@ public:
 	ATeam13_GameState();
 
 	virtual void BeginPlay() override;
-
+	virtual void PostInitializeComponents() override;
 	//int32 EnemyToSpawn;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stage")
@@ -31,10 +31,9 @@ public:
 
 	void StartStage();
 	void EndStage();
+	UFUNCTION()
 	void OnGameOver();
 	void UpdateHUD();
-	
-	//юс╫ц
 	void OnStageTimeUp();
 
 	float StageDuration;
