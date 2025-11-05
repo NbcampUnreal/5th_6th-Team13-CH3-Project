@@ -23,10 +23,7 @@ UTeam13_GameInstance::UTeam13_GameInstance()
 //	}
 //}
 //
-//void UTeam13_GameInstance::AddToKill()
-//{
-//	if (몬스터가 사망할 때)
-//	{
-//		++CurrentKill;
-//	}
-//}
+void UTeam13_GameInstance::AddToKill()
+{
+		++CurrentKill;
+}

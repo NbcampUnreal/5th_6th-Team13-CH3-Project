@@ -28,7 +28,7 @@ public:
 	
 
 	/*UFUNCTION(BlueprintCallable, Category = "GameData")
-	void AddToEXP(int32 Amount);
+	void AddToEXP(int32 Amount);*/
 	UFUNCTION(BlueprintCallable, Category = "GameData")
-	void AddToKill();*/
+	void AddToKill();
 };

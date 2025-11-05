@@ -6,6 +6,8 @@
 
 class UCombatComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMonsterDeath);
+
 UCLASS()
 class TEAM13_PROJECT_API ABaseMonsterCharacter : public ACharacter, public IHitDamageable
 {
@@ -27,7 +29,8 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
     UCombatComponent* CombatComp;
-
+    
+    
     UFUNCTION()
     void OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* Other, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 

@@ -1,8 +1,12 @@
 #include "BaseMonsterCharacter.h"
 #include "CombatComponent.h"
+#include "Team13_GameMode.h"
+#include "GameFramework/GameState.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+
+
 
 
 void ABaseMonsterCharacter::BeginPlay()
@@ -83,10 +87,14 @@ void ABaseMonsterCharacter::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* O
 
 void ABaseMonsterCharacter::OnDead()
 {
+	ATeam13_GameMode* GameMode = GetWorld()->GetAuthGameMode<ATeam13_GameMode>();
+	if (GameMode)
+	{
+		GameMode->MonsterKilled(this);
+	}
 	if (UCharacterMovementComponent* M = GetCharacterMovement()) M->DisableMovement();
 	DetachFromControllerPendingDestroy();
 }
-
 void ABaseMonsterCharacter::EnableRagdollAndImpulse(const FVector& Impulse)
 {
 	if (USkeletalMeshComponent* MeshComp = GetMesh())
@@ -134,6 +142,7 @@ void ABaseMonsterCharacter::SyncSizeToScale()
 
 
 }
+
 
 
 
