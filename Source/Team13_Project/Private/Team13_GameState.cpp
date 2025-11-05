@@ -9,7 +9,7 @@
 
 ATeam13_GameState::ATeam13_GameState()
 {
-	StageDuration = 1000.f;
+	StageDuration = 5.f;
 	CurrentStageIndex = 0;
 	MaxStageIndex = 2;
 }
@@ -134,8 +134,7 @@ void ATeam13_GameState::OnGameOver()
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
 		{
 			Team13_PlayerController->SetPause(true);
-			//Team13_PlayerController->ShowEndMenu(true); //юс╫ц
-			/*if (HERO_Character->IsDead() ||
+			if (HERO_Character->IsDead() ||
 				(StageDuration < 0 && HERO_Character->GetHeroLevel() < 5))
 			{
 				Team13_PlayerController->ShowEndMenu(true);
@@ -143,17 +142,15 @@ void ATeam13_GameState::OnGameOver()
 			else 
 			{
 				Team13_PlayerController->ShowEndMenu(false);
-			}*/
-			if (HERO_Character->IsDead())
+			}
+			/*if (HERO_Character->IsDead())
 			{
-				UE_LOG(LogTemp, Error, TEXT("Death"));
 				Team13_PlayerController->ShowEndMenu(true);
 			}
 			else 
 			{
-				UE_LOG(LogTemp, Error, TEXT("Failed Death"));
-			}
-
+				Team13_PlayerController->ShowEndMenu(false);
+			}*/
 		}
 	}
 }
@@ -210,7 +207,7 @@ void ATeam13_GameState::UpdateHUD()
 							//PlayerLevel Text
 							if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("LevelText"))))
 							{
-								LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level)));
+								LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level - 1)));
 							}
 						}
 					}

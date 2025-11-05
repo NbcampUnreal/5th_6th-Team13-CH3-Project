@@ -9,8 +9,6 @@ void ABaseMonsterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
-
 	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
 	{
 		Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);

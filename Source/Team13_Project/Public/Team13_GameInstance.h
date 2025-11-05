@@ -17,16 +17,14 @@ public:
 
 	//юс╫ц
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
-	int32 CurrentExp;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
-	int32 MaxExp;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
-	int32 CurrentLevel;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
 	int32 CurrentKill;
 
-	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
+	int32 Score;
 
+	
+	UFUNCTION(BlueprintCallable, Category = "GameData")
+	void AddScore(int32 Amount);
 	/*UFUNCTION(BlueprintCallable, Category = "GameData")
 	void AddToEXP(int32 Amount);
 	UFUNCTION(BlueprintCallable, Category = "GameData")

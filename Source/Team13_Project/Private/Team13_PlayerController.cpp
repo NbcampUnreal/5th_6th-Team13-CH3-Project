@@ -149,21 +149,36 @@ void ATeam13_PlayerController::ShowEndMenu(bool bIsReStart)
 			ResultText->SetText(FText::FromString(bIsReStart ? TEXT("Loser") : TEXT("Winner")));
 		}
 
-		//레벨 text
-		if (UTextBlock* TotalLevelText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("LevelText")))
-		{
-			if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
-			{
-				TotalLevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), GameInstance->CurrentLevel)));
-			}
-		}
-
 		//킬 text
 		if (UTextBlock* TotalKillText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("KillText")))
 		{
 			if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
 			{
-				TotalKillText->SetText(FText::FromString(FString::Printf(TEXT("Kill : %d"), GameInstance->CurrentKill)));
+				TotalKillText->SetText(FText::FromString(FString::Printf(TEXT("Kill\n%d"), GameInstance->CurrentKill)));
+			}
+		}
+
+		//스코어 text (누적 경험치)
+		if (UTextBlock* TotalScoreText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("ScoreText")))
+		{
+			if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
+			{
+				TotalScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score\n%d"), GameInstance->Score)));
+			}
+		}
+
+		//레벨 text
+		if (UTextBlock* TotalLevelText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("LevelText")))
+		{
+			if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+			{
+				if (ACharacter* Character = PlayerController->GetCharacter())
+				{
+					if (AHERO_Character* HeroCharacter = Cast<AHERO_Character>(Character))
+					{
+						TotalLevelText->SetText(FText::FromString(FString::Printf(TEXT("Level\n%d"), HeroCharacter->CURRENT_V)));
+					}
+				}
 			}
 		}
 	}

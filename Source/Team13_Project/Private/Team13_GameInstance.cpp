@@ -5,11 +5,13 @@ UTeam13_GameInstance::UTeam13_GameInstance()
 	CurrentStageIndex = 0;
 
 	//임시
-	CurrentExp = 0;
-	MaxExp = 100;
-	CurrentLevel = 1;
 	CurrentKill = 0;
+	Score = 0;
+}
 
+void UTeam13_GameInstance::AddScore(int32 Amount)
+{
+	Score += Amount;
 }
 
 ////EXP를 얻고 100이 넘으면 Levelup
