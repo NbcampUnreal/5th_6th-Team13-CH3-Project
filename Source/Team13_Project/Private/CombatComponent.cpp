@@ -157,11 +157,9 @@ void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>&
     }
 }
 
-<<<<<<< HEAD
-void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,  float Damage,const FVector& HitImpulseDir)
-=======
+
 void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,  float Damage,const FVector& HitImpulseDir) 
->>>>>>> 411fa3db51450c689ba267ba79a0dd5f5a9ad60e
+
 {
     if (!Target || Target->IsDead())
         return;
@@ -453,12 +451,7 @@ void UCombatComponent::EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, 
             MID->SetScalarParameterValue(Param, Value);
         }
     }
-<<<<<<< HEAD
 
-}
-
-
-=======
 }
 
 void UCombatComponent::SetBlink(AActor* Target, bool bOn) const
@@ -549,4 +542,3 @@ void UCombatComponent::StopInvincibility(AActor* Target) const
     SetBlink(Target, false);
     BlinkStateMap.Remove(Target);
 }
->>>>>>> ec5d385250ca373f69e12dafde2bc8f5c0cdf6f5

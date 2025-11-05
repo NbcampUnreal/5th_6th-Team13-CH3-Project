@@ -9,14 +9,10 @@
 
 ATeam13_GameState::ATeam13_GameState()
 {
-<<<<<<< HEAD
+
 
 	StageDuration = 100.f;
-
-	StageDuration = 60.f;
-=======
 	StageDuration = 1000.f;
->>>>>>> 411fa3db51450c689ba267ba79a0dd5f5a9ad60e
 	CurrentStageIndex = 0;
 	MaxStageIndex = 2;
 }
@@ -25,10 +21,9 @@ void ATeam13_GameState::BeginPlay()
 {
 	Super::BeginPlay();
 
-<<<<<<< HEAD
+
 	
-=======
->>>>>>> 411fa3db51450c689ba267ba79a0dd5f5a9ad60e
+
 	/*TArray<AActor*> FoundVolumes;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnEnemy::StaticClass(), FoundVolumes);
 
@@ -88,7 +83,7 @@ void ATeam13_GameState::StartStage()
 			CurrentStageIndex = Team13_GameInstance->CurrentStageIndex;
 		}
 	}
-	// ë°”ì¸ë”©ì„ ìŠ¤íƒ€íŠ¸ ê²Œì„ìœ¼ë¡œ ì´ë™, ê¸°ì¡´ì˜ beginplayë•ŒëŠ” ì•„ì§ í”Œë ˆì´ì–´ê°€ ë§µì— ì—†ë‹¤.
+	// ë°??¸ë?©ì?? ?¤í???? ê²????¼ë? ?´ë??, ê¸°ì¡´?? beginplay???? ??ì§? ?????´ì?´ê? ë§µì?? ????.
 	HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (HERO_Character != nullptr)
 	{
@@ -150,8 +145,7 @@ void ATeam13_GameState::OnGameOver()
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
 		{
 			Team13_PlayerController->SetPause(true);
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 
 			Team13_PlayerController->ShowEndMenu(true); 
 			if (HERO_Character->IsDead())
@@ -162,15 +156,14 @@ void ATeam13_GameState::OnGameOver()
 
 			if (HERO_Character->IsDead() || 
 				(StageDuration < 0 && HERO_Character->GetHeroLevel() < 5))
-=======
+
 			Team13_PlayerController->ShowEndMenu(true); //ÀÓ½Ã
 			/*if (ÇÃ·¹ÀÌ¾î°¡ Á×À½ or ½Ã°£¾È¿¡ ·¹º§µµ´Ş½ÇÆĞ)
->>>>>>> 411fa3db51450c689ba267ba79a0dd5f5a9ad60e
-=======
+
 			//Team13_PlayerController->ShowEndMenu(true); //ÀÓ½Ã
 			/*if (HERO_Character->IsDead() ||
 				(StageDuration < 0 && HERO_Character->GetHeroLevel() < 5))
->>>>>>> ec5d385250ca373f69e12dafde2bc8f5c0cdf6f5
+>
 			{
 				Team13_PlayerController->ShowEndMenu(true);
 			}

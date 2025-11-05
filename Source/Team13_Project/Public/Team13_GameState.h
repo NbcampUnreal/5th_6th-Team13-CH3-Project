@@ -31,11 +31,8 @@ public:
 
 	void StartStage();
 	void EndStage();
-<<<<<<< HEAD
 
-	//dynamic delegate에 바인딩된 함수는 언리얼엔진이 참조해서 호출하기때문에 ufunction이 필수
-=======
->>>>>>> ec5d385250ca373f69e12dafde2bc8f5c0cdf6f5
+	
 	UFUNCTION()
 	void OnGameOver();
 	void UpdateHUD();
