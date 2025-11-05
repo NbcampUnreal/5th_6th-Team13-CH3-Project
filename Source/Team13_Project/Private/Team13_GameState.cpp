@@ -2,17 +2,20 @@
 #include "Team13_PlayerController.h"
 #include "Team13_GameInstance.h"
 #include "SpawnEnemy.h"
-#include "HERO_Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
 
 ATeam13_GameState::ATeam13_GameState()
 {
+<<<<<<< HEAD
 
 	StageDuration = 100.f;
 
 	StageDuration = 60.f;
+=======
+	StageDuration = 1000.f;
+>>>>>>> 411fa3db51450c689ba267ba79a0dd5f5a9ad60e
 	CurrentStageIndex = 0;
 	MaxStageIndex = 2;
 }
@@ -21,7 +24,10 @@ void ATeam13_GameState::BeginPlay()
 {
 	Super::BeginPlay();
 
+<<<<<<< HEAD
 	
+=======
+>>>>>>> 411fa3db51450c689ba267ba79a0dd5f5a9ad60e
 	/*TArray<AActor*> FoundVolumes;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnEnemy::StaticClass(), FoundVolumes);
 
@@ -131,6 +137,7 @@ void ATeam13_GameState::OnGameOver()
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
 		{
 			Team13_PlayerController->SetPause(true);
+<<<<<<< HEAD
 
 			Team13_PlayerController->ShowEndMenu(true); 
 			if (HERO_Character->IsDead())
@@ -141,13 +148,17 @@ void ATeam13_GameState::OnGameOver()
 
 			if (HERO_Character->IsDead() || 
 				(StageDuration < 0 && HERO_Character->GetHeroLevel() < 5))
+=======
+			Team13_PlayerController->ShowEndMenu(true); //임시
+			/*if (플레이어가 죽음 or 시간안에 레벨도달실패)
+>>>>>>> 411fa3db51450c689ba267ba79a0dd5f5a9ad60e
 			{
 				Team13_PlayerController->ShowEndMenu(true);
 			}
-			else
+			else (성공)
 			{
 				Team13_PlayerController->ShowEndMenu(false);
-			}
+			}*/
 		}
 	}
 }

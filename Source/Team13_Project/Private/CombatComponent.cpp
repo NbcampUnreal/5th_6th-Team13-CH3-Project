@@ -154,7 +154,11 @@ void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>&
     }
 }
 
+<<<<<<< HEAD
 void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,  float Damage,const FVector& HitImpulseDir)
+=======
+void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,  float Damage,const FVector& HitImpulseDir) 
+>>>>>>> 411fa3db51450c689ba267ba79a0dd5f5a9ad60e
 {
     if (!Target || Target->IsDead())
         return;
@@ -174,7 +178,17 @@ void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& 
         Target->EnableRagdollAndImpulse(HitImpulseDir.GetSafeNormal() * Settings.RagdollImpulseScale);
     }
 }
-
+void UCombatComponent::ApplyFixedDamage_BP(AActor* TargetActor, float Damage, const FVector& HitImpulseDir)
+{
+    if (!TargetActor) return;
+    if (TargetActor->GetClass()->ImplementsInterface(UHitDamageable::StaticClass()))
+    {
+        TScriptInterface<IHitDamageable> TargetIntf;
+        TargetIntf.SetObject(TargetActor);
+        TargetIntf.SetInterface(Cast<IHitDamageable>(TargetActor));
+        ApplyFixedDamage(TargetIntf, Damage, HitImpulseDir);
+    }
+}
 void UCombatComponent::ApplyInstantKill(const TScriptInterface<IHitDamageable>& Target,const FVector& HitImpulseDir) const
 {
     if (!Target || Target->IsDead()) return;
