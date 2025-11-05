@@ -1,4 +1,5 @@
 #include "Team13_GameInstance.h"
+#include "Team13_GameMode.h"
 
 UTeam13_GameInstance::UTeam13_GameInstance()
 {
@@ -13,17 +14,23 @@ UTeam13_GameInstance::UTeam13_GameInstance()
 }
 
 ////EXP를 얻고 100이 넘으면 Levelup
-//void UTeam13_GameInstance::AddToEXP(int32 Amount)
-//{
-//	CurrentExp += Amount;
-//	if (CurrentExp >= MaxExp)
-//	{
-//		CurrentLevel++;
-//		CurrentExp -= MaxExp;
-//	}
-//}
-//
+/*void UTeam13_GameInstance::AddToEXP(int32 Amount)
+{
+	CurrentExp += Amount;
+	if (CurrentExp >= MaxExp)
+	{
+		ATeam13_GameMode* GameMode = GetWorld()->GetAuthGameMode<ATeam13_GameMode>();
+		if (GameMode)
+		{
+			
+		}
+		CurrentLevel++;
+		CurrentExp -= MaxExp;
+	}
+}*/
+
 void UTeam13_GameInstance::AddToKill()
 {
-		++CurrentKill;
+	++CurrentKill;
+	AddToKill();
 }

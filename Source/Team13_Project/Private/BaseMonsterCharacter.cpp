@@ -90,7 +90,7 @@ void ABaseMonsterCharacter::OnDead()
 	ATeam13_GameMode* GameMode = GetWorld()->GetAuthGameMode<ATeam13_GameMode>();
 	if (GameMode)
 	{
-		GameMode->MonsterKilled(this);
+		GameMode->MonsterKilled(this,exp);
 	}
 	if (UCharacterMovementComponent* M = GetCharacterMovement()) M->DisableMovement();
 	DetachFromControllerPendingDestroy();

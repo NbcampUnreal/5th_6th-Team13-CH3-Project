@@ -26,7 +26,9 @@ public:
     float CurrentHealth = 100.f;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Monster") 
     float Speed = 50.f;
-
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Monster") 
+    float exp = 1.f;
+    
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
     UCombatComponent* CombatComp;
     
