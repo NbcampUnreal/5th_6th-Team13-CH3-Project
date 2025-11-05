@@ -253,7 +253,7 @@ public:
 	virtual float GetCurrentSpeed() const override { return GetVelocity().Size(); }
 
 	virtual bool  IsDead() const override { return HP <= 0.f; }
-	virtual void  OnDead() override { /* 필요시 추가 처리 */ }
+	virtual void  OnDead() override { OnHeroDeath.Broadcast(); }
 
 	virtual void  EnableRagdollAndImpulse(const FVector& Impulse) override;
 

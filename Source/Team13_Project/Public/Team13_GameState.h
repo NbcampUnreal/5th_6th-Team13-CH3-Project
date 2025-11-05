@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HERO_Character.h"
 #include "GameFramework/GameState.h"
 #include "Team13_GameState.generated.h"
 
@@ -25,6 +26,8 @@ public:
 
 	FTimerHandle StageTimerHandle;
 	FTimerHandle HUDUpdateTimerHandle;
+
+	AHERO_Character* HERO_Character;
 
 	void StartStage();
 	void EndStage();
