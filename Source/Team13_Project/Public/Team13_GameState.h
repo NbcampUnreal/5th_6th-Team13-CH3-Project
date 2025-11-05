@@ -30,8 +30,6 @@ public:
 	void EndStage();
 	void OnGameOver();
 	void UpdateHUD();
-	
-	//юс╫ц
 	void OnStageTimeUp();
 
 	float StageDuration;
