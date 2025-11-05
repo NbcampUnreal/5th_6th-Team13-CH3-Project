@@ -154,7 +154,7 @@ void ATeam13_PlayerController::ShowEndMenu(bool bIsReStart)
 		{
 			if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
 			{
-				TotalKillText->SetText(FText::FromString(FString::Printf(TEXT("Kill\n%d"), GameInstance->CurrentKill)));
+				TotalKillText->SetText(FText::FromString(FString::Printf(TEXT("Kill : %d"), GameInstance->CurrentKill)));
 			}
 		}
 
@@ -163,7 +163,7 @@ void ATeam13_PlayerController::ShowEndMenu(bool bIsReStart)
 		{
 			if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
 			{
-				TotalScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score\n%d"), GameInstance->Score)));
+				TotalScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score : %d"), GameInstance->Score)));
 			}
 		}
 
@@ -172,11 +172,12 @@ void ATeam13_PlayerController::ShowEndMenu(bool bIsReStart)
 		{
 			if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 			{
-				if (ACharacter* Character = PlayerController->GetCharacter())
+				if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
 				{
-					if (AHERO_Character* HeroCharacter = Cast<AHERO_Character>(Character))
+					ACharacter* player = PlayerController->GetCharacter();
+					if (AHERO_Character* HeroCharacter = Cast<AHERO_Character>(player))
 					{
-						TotalLevelText->SetText(FText::FromString(FString::Printf(TEXT("Level\n%d"), HeroCharacter->CURRENT_V)));
+						TotalLevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level)));
 					}
 				}
 			}

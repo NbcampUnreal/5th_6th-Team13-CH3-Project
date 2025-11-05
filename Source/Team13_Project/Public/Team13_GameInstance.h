@@ -22,11 +22,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
 	int32 Score;
 
-	
 	UFUNCTION(BlueprintCallable, Category = "GameData")
 	void AddScore(int32 Amount);
-	/*UFUNCTION(BlueprintCallable, Category = "GameData")
-	void AddToEXP(int32 Amount);
-	UFUNCTION(BlueprintCallable, Category = "GameData")
-	void AddToKill();*/
 };

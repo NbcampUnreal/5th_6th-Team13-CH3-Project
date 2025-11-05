@@ -9,7 +9,7 @@
 
 ATeam13_GameState::ATeam13_GameState()
 {
-	StageDuration = 5.f;
+	StageDuration = 100.f;
 	CurrentStageIndex = 0;
 	MaxStageIndex = 2;
 }
@@ -176,10 +176,10 @@ void ATeam13_GameState::UpdateHUD()
 						}
 
 						//Exp Text
-						if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("ExpText"))))
+						/*if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("ExpText"))))
 						{
-							ExpText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), Team13_GameInstance->CurrentExp, Team13_GameInstance->MaxExp)));
-						}
+							ExpText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), 캐릭터 현재 경험치, 최대경험치)));
+						}*/
 						
 						//Stage Text
 						if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("StageText"))))
@@ -207,7 +207,7 @@ void ATeam13_GameState::UpdateHUD()
 							//PlayerLevel Text
 							if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("LevelText"))))
 							{
-								LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level - 1)));
+								LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level)));
 							}
 						}
 					}
