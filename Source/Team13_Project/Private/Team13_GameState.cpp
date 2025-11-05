@@ -37,7 +37,8 @@ void ATeam13_GameState::BeginPlay()
 		}
 	}*/
 	StartStage();
-
+	HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	
 	GetWorldTimerManager().SetTimer(
 		HUDUpdateTimerHandle,
 		this,
@@ -56,6 +57,11 @@ void ATeam13_GameState::StartStage()
 		}
 	}
 
+	if (HERO_Character) 
+	{
+		HERO_Character->OnHeroDeath.AddDynamic(this, &ATeam13_GameState::OnGameOver);
+	}
+	
 	if(UGameInstance * GameInstance = GetGameInstance())
 	{
 		UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(GameInstance);
@@ -121,15 +127,21 @@ void ATeam13_GameState::OnGameOver()
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
 		{
 			Team13_PlayerController->SetPause(true);
-			Team13_PlayerController->ShowEndMenu(true); //임시
-			/*if (플레이어가 죽음 or 시간안에 레벨도달실패)
+			//Team13_PlayerController->ShowEndMenu(true); //임시
+			/*if (HERO_Character->IsDead() ||
+				(StageDuration < 0 && HERO_Character->GetHeroLevel() < 5))
 			{
 				Team13_PlayerController->ShowEndMenu(true);
 			}
-			else (성공)
+			else 
 			{
 				Team13_PlayerController->ShowEndMenu(false);
 			}*/
+			if (HERO_Character->IsDead())
+			{
+				Team13_PlayerController->ShowEndMenu(true);
+			}
+
 		}
 	}
 }
