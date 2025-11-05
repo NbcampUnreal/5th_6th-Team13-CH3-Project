@@ -8,7 +8,7 @@
 
 ATeam13_GameState::ATeam13_GameState()
 {
-	StageDuration = 10.f;
+	StageDuration = 1000.f;
 	CurrentStageIndex = 0;
 	MaxStageIndex = 2;
 }
