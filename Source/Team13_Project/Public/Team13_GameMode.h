@@ -9,11 +9,15 @@
 /**
  * 
  */
+class ABaseMonsterCharacter;
 UCLASS()
 class TEAM13_PROJECT_API ATeam13_GameMode : public AGameMode
 {
 	GENERATED_BODY()
 public:
 	ATeam13_GameMode();
-	
+	void MonsterKilled(ABaseMonsterCharacter* KilledMonster, int32 exp);
+	void PlayerLevelUp();
+	bool IsCompleteGame();
+	void CompleteGame();
 };
