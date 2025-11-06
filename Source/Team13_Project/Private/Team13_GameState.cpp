@@ -54,11 +54,16 @@ void ATeam13_GameState::PostInitializeComponents()
 
 void ATeam13_GameState::StartStage()
 {
-	UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
-
-	if (PoolManager)
+	UE_LOG(LogTemp, Display, TEXT("Starting Stage %d"), CurrentStageIndex);
+	
+	FString CurrentMapName = GetWorld()->GetMapName();
+	if (!CurrentMapName.Contains("StartMenu"))
 	{
-		PoolManager->InitializePool(AAiTestMonster::StaticClass(), 10);
+		UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
+		if (PoolManager)
+		{
+			PoolManager->InitializePool(AAiTestMonster::StaticClass(), 10);
+		}
 	}
 
 	//HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -78,13 +83,8 @@ void ATeam13_GameState::StartStage()
 			CurrentStageIndex = Team13_GameInstance->CurrentStageIndex;
 		}
 	}
-	// ë°??¸ë?©ì?? ?¤í???? ê²????¼ë? ?´ë??, ê¸°ì¡´?? beginplay???? ??ì§? ?????´ì?´ê? ë§µì?? ????.
-	HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	if (HERO_Character != nullptr)
-	{
-		HERO_Character->OnHeroDeath.AddDynamic(this,&ATeam13_GameState::OnGameOver);
-	}
-	FString CurrentMapName = GetWorld()->GetMapName();
+	
+	
 	if (!CurrentMapName.Contains("StartMenu"))
 	{
 		GetWorldTimerManager().SetTimer(
@@ -104,6 +104,7 @@ void ATeam13_GameState::OnStageTimeUp()
 //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 void ATeam13_GameState::EndStage()
 {
+	UE_LOG(LogTemp, Display, TEXT("Ending Stage %d"), CurrentStageIndex);
 	GetWorldTimerManager().ClearTimer(StageTimerHandle);
 
 	if (UGameInstance* GameInstance = GetGameInstance())
