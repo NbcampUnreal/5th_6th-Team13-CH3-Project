@@ -3,244 +3,263 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "HitDamageable.h" // 데미지 인터페이스
 #include "HERO_Character.generated.h"
 
-// 스킬1 상태
+/**
+ * 스킬 상태(이동 모드)
+ * - Normal: 그냥 걷는/가속 상태
+ * - AimingDash: 대쉬 준비 상태 (버튼 1번 눌렀을 때 등)
+ * - Dashing: 실제 돌진 중
+ */
 UENUM(BlueprintType)
 enum class ESkillState : uint8
 {
-    Normal,
-    AimingDash,
-    Dashing
+	Normal,
+	AimingDash,
+	Dashing
 };
 
-// 알림 델리게이트
+/* ===========================
+ *  알림(이벤트) 델리게이트 타입 선언
+ *  레벨업/HP변경/사망 알림
+ * =========================== */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHeroLevelUp, int32, OldLevel, int32, NewLevel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnHPChanged, float, OldHP, float, NewHP, float, Delta);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHeroDeath);
 
-// 스킬2(메테오) 상태
-UENUM(BlueprintType)
-enum class EMeteorState : uint8
-{
-    None,
-    Ascending,
-    Aiming,
-    Descending
-};
-
 class USpringArmComponent;
 class UCameraComponent;
-class UInputMappingContext;
-class UInputAction;
+//class UInputMappingContext;
+//class UInputAction;
 class UCharacterMovementComponent;
-class UDecalComponent;
-class UMaterialInterface;
+class UCombatComponent;
 
+/**
+ * AHERO_Character
+ *  - ACharacter 기반: 캡슐 충돌, 중력, 지면 걷기, 회전 처리 등 언리얼 기본 사람형 이동을 자동으로 가짐
+ *  - 이동/가속/대쉬/스탯 시스템을 통합
+ */
 UCLASS()
-class TEAM13_PROJECT_API AHERO_Character : public ACharacter
+class TEAM13_PROJECT_API AHERO_Character : public ACharacter, public IHitDamageable
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
 public:
-    AHERO_Character();
+	AHERO_Character();
 
-    UFUNCTION(BlueprintPure, Category = "Skill")
-    ESkillState GetSkillState() const { return CurrentSkillState; }
+	// AnimBP에서 읽기용(스킬 상태 Getter)
+	UFUNCTION(BlueprintPure, Category = "Skill")
+	ESkillState GetSkillState() const { return CurrentSkillState; }
 
 protected:
-    virtual void BeginPlay() override;
-    virtual void Tick(float DeltaSeconds) override;
-    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-    virtual void Landed(const FHitResult& Hit) override;
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-    void HandleCooldowns(float DeltaSeconds);
-    void HandleDash(float DeltaSeconds);
-    void HandleMovement(float DeltaSeconds);
+	/* ===========================
+	 *  내부 처리 함수
+	 * =========================== */
+	void HandleCooldowns(float DeltaSeconds);
+	void HandleDash(float DeltaSeconds);
+	void HandleMovement(float DeltaSeconds);
 
-    void ApplyLevelStats();
-    void LevelUpInternal();
+	void ApplyLevelStats();   // 레벨에 따른 스텟 적용함수
+	void LevelUpInternal();   // 실제 레벨업 처리 (HP/MaxHP 포함)
 
-    void Input_Accelerate(const FInputActionValue& Value);
-    void Input_Look(const FInputActionValue& Value);
-    void Input_DashSkill(const FInputActionValue& Value);
+	/* ===========================
+	 *  입력 처리 콜백
+	 * =========================== */
+	void Input_Accelerate(const FInputActionValue& Value);
+	void Input_Look(const FInputActionValue& Value);
+	void Input_DashSkill(const FInputActionValue& Value);
 
-    // 스킬2 입력
-    void Input_MeteorStrike(const FInputActionValue& Value);
-
-    // 스킬2 내부
-    void BeginMeteorAscend();
-    void TickMeteor(float DeltaSeconds);
-    void BeginMeteorAiming();
-    void UpdateMeteorCursor();
-    void CommitMeteorStrike();
-
-public:
-    // 컴포넌트
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    USpringArmComponent* SpringArmComp;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    UCameraComponent* CameraComp;
-
-    // 입력
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    UInputMappingContext* IMC_HERO;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    UInputAction* IA_HERO_Look;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    UInputAction* IA_HERO_Accelerate;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    UInputAction* IA_HERO_DashSkill;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    UInputAction* IA_HERO_MeteorStrike;
-
-    // 이동 스탯
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement Stats")
-    float CURRENT_V;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement Stats")
-    float MAX_V;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement Stats")
-    float PLUS_V;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement Stats")
-    float MIUS_V;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement Stats")
-    bool bIsAccelerating;
-
-    // 레벨/성장
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
-    int32 Level;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
-    float BASE_MAX_V;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
-    float BASE_PLUS_V;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
-    float INC_MAX_V_PER_LVL;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
-    float INC_PLUS_V_PER_LVL;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
-    float Weight;
-
-    // 경험치(고정 규칙: MAX_EXP는 100, 초과 시 레벨업하고 EXP=0)
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
-    float EXP;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
-    float MAX_EXP;
-
-    // HP
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
-    float HP;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
-    float MaxHP;
-
-    // 스킬1(대쉬)
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
-    ESkillState CurrentSkillState = ESkillState::Normal;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill")
-    float DashDuration;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
-    float DashTimer;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill")
-    float DashCooldown;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
-    float DashCooldownRemaining;
-
-    // 스킬2(메테오)
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    UDecalComponent* MeteorCursorDecal;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    UMaterialInterface* MeteorCursorMaterial;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    TSubclassOf<AActor> MeteorAOESphereClass;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    float MeteorTargetHeight;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    float MeteorAscendSpeed;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    float MeteorFallSpeed;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    float MeteorAimMaxDistance;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    float MeteorAOESphereLifeSeconds;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    EMeteorState MeteorState = EMeteorState::None;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    float MeteorStartZ = 0.f;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    float MeteorTargetZ = 0.f;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    float MeteorSavedGravityScale = 1.f;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    bool bMeteorAimValid = false;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    FVector MeteorAimLocation = FVector::ZeroVector;
+	//충돌 감지 함수
+	UFUNCTION()
+	void OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* Other, UPrimitiveComponent* OtherComp,
+		FVector NormalImpulse, const FHitResult& Hit);
 
 public:
-    // 이벤트
-    UPROPERTY(BlueprintAssignable, Category = "Events")
-    FOnHeroLevelUp OnHeroLevelUp;
+	/* ===========================
+	 *  카메라 관련 컴포넌트
+	 *  (캡슐/이동컴포넌트는 ACharacter가 이미 가짐)
+	 * =========================== */
 
-    UPROPERTY(BlueprintAssignable, Category = "Events")
-    FOnHPChanged OnHPChanged;
+	 // 3인칭 카메라 붐(캐릭터 뒤에 따라붙는 스프링암)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USpringArmComponent* SpringArmComp;
 
-    UPROPERTY(BlueprintAssignable, Category = "Events")
-    FOnHeroDeath OnHeroDeath;
+	// 실제 카메라
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UCameraComponent* CameraComp;
 
-    // 공개 함수
-    UFUNCTION(BlueprintCallable, Category = "HP")
-    float GetHP() const { return HP; }
+	/* ===========================
+	 *  Enhanced Input 설정
+	 * =========================== */
 
-    UFUNCTION(BlueprintCallable, Category = "HP")
-    float GetMaxHP() const { return MaxHP; }
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputMappingContext* IMC_HERO;
 
-    UFUNCTION(BlueprintCallable, Category = "HP")
-    int32 GetHeroLevel() const { return Level; }
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputAction* IA_HERO_Look;
 
-    UFUNCTION(BlueprintCallable, Category = "HP")
-    void ApplyDamage(float DamageAmount);
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputAction* IA_HERO_Accelerate;
 
-    UFUNCTION(BlueprintCallable, Category = "HP")
-    void Heal(float HealAmount);
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputAction* IA_HERO_DashSkill;
 
-    UFUNCTION(BlueprintCallable, Category = "HP")
-    void ForceLevelUp();
+	/* ===========================
+	 *  이동/가속 관련 스탯
+	 *  (기존 Pawn 코드 그대로 옮김)
+	 * =========================== */
 
-    // 경험치 
-    UFUNCTION(BlueprintCallable, Category = "Level/Stats")
-    void AddExp(float Amount);
+	 // 현재 속도
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement Stats")
+	float CURRENT_V;
 
-    UFUNCTION(BlueprintPure, Category = "Level/Stats")
-    float GetExpProgress01() const;
+	// 최고 속도
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement Stats")
+	float MAX_V;
+
+	// 가속
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement Stats")
+	float PLUS_V;
+
+	// 감속
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement Stats")
+	float MIUS_V;
+
+	// 가속 버튼
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement Stats")
+	bool bIsAccelerating;
+
+	// 레벨
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
+	int32 Level;
+
+	// 기본 최대속도
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
+	float BASE_MAX_V;
+
+	// 기본 가속량
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
+	float BASE_PLUS_V;
+
+	// 레벨당 MAX_V 증가량
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
+	float INC_MAX_V_PER_LVL;
+
+	// 레벨당 PLUS_V 증가량
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
+	float INC_PLUS_V_PER_LVL;
+
+	// 무게 (일단 변수만)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
+	float Weight;
+
+	// 크기 계수 - CSM
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
+	float SizeScale = 1.0f;
+
+	/* ===========================
+	 *  HP / 레벨업 관련
+	 * =========================== */
+
+	 // 현재 HP
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
+	float HP;
+
+	// 최대 HP
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
+	float MaxHP;
+
+	/* ===========================
+	 *  스킬(대쉬) 관련
+	 * =========================== */
+
+	 // 현재 스킬 상태(AnimBP에서 읽음)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
+	ESkillState CurrentSkillState = ESkillState::Normal;
+
+	// 돌진 스킬 유지기간
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill")
+	float DashDuration;
+
+	// 현재 돌진 스킬 남은 시간
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
+	float DashTimer;
+
+	// 돌진 스킬 쿨다운
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill")
+	float DashCooldown;
+
+	// 현재 남은 쿨다운 시간
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
+	float DashCooldownRemaining;
+
+	/* ===========================
+	 *  알림 이벤트 (BP에서 Bind 가능, 틱 사용 없음)
+	 * =========================== */
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnHeroLevelUp OnHeroLevelUp;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnHPChanged OnHPChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnHeroDeath OnHeroDeath;
+
+public:
+	/* ===========================
+	 *  테스트용
+	 * =========================== */
+
+	 // 현재 HP
+	UFUNCTION(BlueprintCallable, Category = "HP")
+	float GetHP() const { return HP; }
+
+	// 최대 HP
+	UFUNCTION(BlueprintCallable, Category = "HP")
+	float GetMaxHP() const { return MaxHP; }
+
+	// 현재 캐릭터 레벨
+	UFUNCTION(BlueprintCallable, Category = "HP")
+	int32 GetHeroLevel() const { return Level; }
+
+	// 피해 입기
+	/*UFUNCTION(BlueprintCallable, Category = "HP")
+	void ApplyDamage(float DamageAmount);*/
+
+	// 회복
+	UFUNCTION(BlueprintCallable, Category = "HP")
+	void Heal(float HealAmount);
+
+	// 강제로 레벨업 (테스트용)
+	UFUNCTION(BlueprintCallable, Category = "HP")
+	void ForceLevelUp();
+
+	// 크기증가 함수 - CSM
+	void SyncSizeToScale();
+	//데미지 관련 함수들
+	virtual float GetCurrentHealth() const override { return HP; }
+	virtual float GetMaxHealth() const override { return MaxHP; }
+	virtual void  SetCurrentHealth(float NewValue) override;
+
+	virtual int32 GetLevel() const override { return GetHeroLevel(); }
+	virtual float GetSizeScale() const override { return GetActorScale3D().GetMax(); }
+
+	virtual float GetMaxSpeed() const override { return MAX_V; }
+	virtual float GetCurrentSpeed() const override { return GetVelocity().Size(); }
+
+	virtual bool  IsDead() const override { return HP <= 0.f; }
+	virtual void  OnDead() override { 
+		OnHeroDeath.Broadcast();
+
+	}
+
+	virtual void  EnableRagdollAndImpulse(const FVector& Impulse) override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	UCombatComponent* CombatComp;
 };

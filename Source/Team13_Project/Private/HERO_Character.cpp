@@ -2,493 +2,511 @@
 
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
-#include "Components/DecalComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+
+#include "CombatComponent.h"//충돌 데미지 함수
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "Team13_PlayerController.h"
 
-#include "DrawDebugHelpers.h"
-
-// 생성자
 AHERO_Character::AHERO_Character()
 {
-    PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = true;
 
-    // 컴포넌트
-    GetCapsuleComponent()->InitCapsuleSize(42.f, 96.f);
+	/* -------------------------------------------------
+	 * 컴포넌트 구성
+	 * ------------------------------------------------- */
 
-    SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
-    SpringArmComp->SetupAttachment(GetCapsuleComponent());
-    SpringArmComp->TargetArmLength = 300.0f;
-    SpringArmComp->bUsePawnControlRotation = true;
+	 // 캡슐 크기 (언리얼 기본 ThirdPerson 캐릭터 비슷한 값)
+	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.f);
 
-    CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
-    CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
-    CameraComp->bUsePawnControlRotation = false;
+	// 3인칭 시점용 카메라 붐(SpringArm)
+	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
+	SpringArmComp->SetupAttachment(GetCapsuleComponent());
+	SpringArmComp->TargetArmLength = 300.0f;           // 카메라 거리
+	SpringArmComp->bUsePawnControlRotation = true;     // 컨트롤러 Yaw/Pitch에 따라 카메라 붐이 회전
 
-    bUseControllerRotationYaw = true;
-    bUseControllerRotationPitch = false;
-    bUseControllerRotationRoll = false;
+	// 실제 카메라
+	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
+	CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
+	CameraComp->bUsePawnControlRotation = false;       // 카메라는 붐을 따라가므로 직접 회전 안 함
 
-    if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-    {
-        MoveComp->bOrientRotationToMovement = false;
-        MoveComp->RotationRate = FRotator(0.f, 500.f, 0.f);
-    }
+	// 회전 정책:
+	// - 캐릭터 몸은 이동 방향을 따라 자동 회전
+	// - 카메라는 컨트롤러 회전으로 움직임
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
 
-    // 기본 스탯
-    CURRENT_V = 10.0f;
-    MAX_V = 10000.0f;
-    PLUS_V = 500.0f;
-    MIUS_V = 500.0f;
-    bIsAccelerating = false;
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->bOrientRotationToMovement = true; // 이동 방향으로 몸 회전
+		MoveComp->RotationRate = FRotator(0.f, 500.f, 0.f);
+	}
 
-    Level = 1;
-    BASE_MAX_V = 10000.0f;
-    BASE_PLUS_V = 500.0f;
-    INC_MAX_V_PER_LVL = 1.0f;
-    INC_PLUS_V_PER_LVL = 1.0f;
+	/* -------------------------------------------------
+	 * 기본 스탯 초기화
+	 * (초기 레벨 1 기준 값)
+	 * ------------------------------------------------- */
 
-    Weight = 10.0f;
+	 // 이동/가속 관련
+	CURRENT_V = 10.0f;
+	MAX_V = 10000.0f;
+	PLUS_V = 500.0f;
+	MIUS_V = 500.0f;
+	bIsAccelerating = false;
 
-    // 경험치 고정 규칙
-    EXP = 0.f;
-    MAX_EXP = 100.f;
+	// 레벨 / 성장 관련
+	Level = 1;
+	BASE_MAX_V = 10000.0f;
+	BASE_PLUS_V = 500.0f;
+	INC_MAX_V_PER_LVL = 1.0f;
+	INC_PLUS_V_PER_LVL = 1.0f;
 
-    // HP
-    MaxHP = 100.0f;
-    HP = MaxHP;
+	// 일반 스탯 (추후 사용 예정)
+	Weight = 10.0f;
 
-    // 스킬1
-    CurrentSkillState = ESkillState::Normal;
-    DashDuration = 10.0f;
-    DashTimer = 0.0f;
-    DashCooldown = 10.0f;
-    DashCooldownRemaining = 0.0f;
+	// HP 관련
+	MaxHP = 100.0f;
+	HP = MaxHP;
 
-    // 스킬2 기본값
-    MeteorState = EMeteorState::None;
-    MeteorTargetHeight = 1200.f;
-    MeteorAscendSpeed = 1800.f;
-    MeteorFallSpeed = 3000.f;
-    MeteorAimMaxDistance = 10000.f;
-    MeteorAOESphereLifeSeconds = 2.0f;
-    MeteorSavedGravityScale = 1.0f;
-    bMeteorAimValid = false;
-    MeteorAimLocation = FVector::ZeroVector;
+	// 스킬(대쉬) 관련
+	CurrentSkillState = ESkillState::Normal;
+	DashDuration = 10.0f;
+	DashTimer = 0.0f;
+	DashCooldown = 10.0f;
+	DashCooldownRemaining = 0.0f;
 
-    // 커서 데칼
-    MeteorCursorDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("MeteorCursorDecal"));
-    MeteorCursorDecal->SetupAttachment(GetRootComponent());
-    MeteorCursorDecal->SetHiddenInGame(true);
-    MeteorCursorDecal->DecalSize = FVector(256.f, 128.f, 128.f);
+	CombatComp = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComp"));
 }
 
 void AHERO_Character::BeginPlay()
 {
-    Super::BeginPlay();
+	Super::BeginPlay();
 
-    ApplyLevelStats();
+	// 레벨 기반으로 이동 스탯 갱신
+	ApplyLevelStats();
 
-    if (CURRENT_V > MAX_V) CURRENT_V = MAX_V;
+	// CURRENT_V가 MAX_V보다 크지 않게 보정
+	if (CURRENT_V > MAX_V)
+	{
+		CURRENT_V = MAX_V;
+	}
 
-    if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-    {
-        MoveComp->MaxWalkSpeed = CURRENT_V;
-    }
+	// CharacterMovement의 이동속도(MaxWalkSpeed)에 우리 CURRENT_V 반영
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->MaxWalkSpeed = CURRENT_V;
+	}
 
-    if (APlayerController* PC = Cast<APlayerController>(GetController()))
-    {
-        if (ULocalPlayer* LP = PC->GetLocalPlayer())
-        {
-            if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-            {
-                if (IMC_HERO)
-                {
-                    Subsystem->AddMappingContext(IMC_HERO, 0);
-                }
-            }
-        }
-    }
+	//// Enhanced Input: 매핑 컨텍스트 등록
+	//if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	//{
+	//	if (ULocalPlayer* LP = PC->GetLocalPlayer())
+	//	{
+	//		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+	//		{
+	//			if (IMC_HERO)
+	//			{
+	//				Subsystem->AddMappingContext(IMC_HERO, /*Priority*/0);
+	//			}
+	//		}
+	//	}
+	//}
+
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+	{
+		Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		Capsule->SetNotifyRigidBodyCollision(true);
+		Capsule->OnComponentHit.AddDynamic(this, &AHERO_Character::OnCapsuleHit);
+	}
 }
 
 void AHERO_Character::Tick(float DeltaSeconds)
 {
-    Super::Tick(DeltaSeconds);
+	Super::Tick(DeltaSeconds);
 
-    HandleCooldowns(DeltaSeconds);
+	// 시간 경과 처리 (쿨다운, 대쉬 타이머 등)
+	HandleCooldowns(DeltaSeconds);
 
-    if (MeteorState == EMeteorState::Ascending || MeteorState == EMeteorState::Aiming)
-    {
-        TickMeteor(DeltaSeconds);
-    }
-    else if (CurrentSkillState == ESkillState::Dashing)
-    {
-        HandleDash(DeltaSeconds);
-    }
-    else
-    {
-        HandleMovement(DeltaSeconds);
-    }
+	// 이동 처리: 상태에 따라 다르게
+	if (CurrentSkillState == ESkillState::Dashing)
+	{
+		HandleDash(DeltaSeconds);
+	}
+	else
+	{
+		HandleMovement(DeltaSeconds);
+	}
 
-    if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-    {
-        MoveComp->MaxWalkSpeed = CURRENT_V;
-    }
+	// 최신 CURRENT_V를 CharacterMovement에 반영
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->MaxWalkSpeed = CURRENT_V;
+	}
 }
 
 void AHERO_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-    Super::SetupPlayerInputComponent(PlayerInputComponent);
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-    if (UEnhancedInputComponent* EI = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-    {
-        if (IA_HERO_Look)
-        {
-            EI->BindAction(IA_HERO_Look, ETriggerEvent::Triggered, this, &AHERO_Character::Input_Look);
-        }
+	// Enhanced Input으로 바인딩
+	if (UEnhancedInputComponent* EI = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		if (ATeam13_PlayerController* PlayerController = Cast<ATeam13_PlayerController>(GetController()))
+		{
+			// 시야 회전
+			if (PlayerController->IA_HERO_Look)
+			{
+				EI->BindAction(PlayerController->IA_HERO_Look, ETriggerEvent::Triggered, this, &AHERO_Character::Input_Look);
+				
+			}
+			else 
+			{
+				UE_LOG(LogTemp, Error, TEXT("Look X"));
+			}
 
-        if (IA_HERO_Accelerate)
-        {
-            EI->BindAction(IA_HERO_Accelerate, ETriggerEvent::Triggered, this, &AHERO_Character::Input_Accelerate);
-            EI->BindAction(IA_HERO_Accelerate, ETriggerEvent::Completed, this, &AHERO_Character::Input_Accelerate);
-        }
+			// 가속/감속
+			if (PlayerController->IA_HERO_Accelerate)
+			{
+				// 누르는 동안 Triggered (true 유지)
+				EI->BindAction(PlayerController->IA_HERO_Accelerate, ETriggerEvent::Triggered, this, &AHERO_Character::Input_Accelerate);
+				// 뗄 때 Completed (false 전달)
+				EI->BindAction(PlayerController->IA_HERO_Accelerate, ETriggerEvent::Completed, this, &AHERO_Character::Input_Accelerate);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Accelerate X"));
+			}
 
-        if (IA_HERO_DashSkill)
-        {
-            EI->BindAction(IA_HERO_DashSkill, ETriggerEvent::Started, this, &AHERO_Character::Input_DashSkill);
-        }
-
-        if (IA_HERO_MeteorStrike)
-        {
-            EI->BindAction(IA_HERO_MeteorStrike, ETriggerEvent::Started, this, &AHERO_Character::Input_MeteorStrike);
-        }
-    }
+			// 대쉬 스킬
+			if (PlayerController->IA_HERO_DashSkill)
+			{
+				EI->BindAction(PlayerController->IA_HERO_DashSkill, ETriggerEvent::Started, this, &AHERO_Character::Input_DashSkill);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Dash X"));
+			}
+		}
+	}
 }
 
-// 쿨다운 처리
+
+/* -------------------------------------------------
+ * 내부 처리: 시간 경과 (쿨다운, 대쉬 타이머 등)
+ * ------------------------------------------------- */
 void AHERO_Character::HandleCooldowns(float DeltaSeconds)
 {
-    if (DashCooldownRemaining > 0.0f)
-    {
-        DashCooldownRemaining -= DeltaSeconds;
-        if (DashCooldownRemaining < 0.0f) DashCooldownRemaining = 0.0f;
-    }
+	// 대쉬 쿨다운 남은 시간 줄이기
+	if (DashCooldownRemaining > 0.0f)
+	{
+		DashCooldownRemaining -= DeltaSeconds;
+		if (DashCooldownRemaining < 0.0f)
+		{
+			DashCooldownRemaining = 0.0f;
+		}
+	}
 
-    if (CurrentSkillState == ESkillState::Dashing)
-    {
-        DashTimer -= DeltaSeconds;
-        if (DashTimer <= 0.0f)
-        {
-            CurrentSkillState = ESkillState::Normal;
-            DashTimer = 0.0f;
-        }
-    }
+	// Dashing 상태에서의 남은 지속시간 줄이기
+	if (CurrentSkillState == ESkillState::Dashing)
+	{
+		DashTimer -= DeltaSeconds;
+		if (DashTimer <= 0.0f)
+		{
+			// 대쉬 끝 → Normal로 복귀
+			CurrentSkillState = ESkillState::Normal;
+			DashTimer = 0.0f;
+		}
+	}
 }
 
-// 대쉬 이동
+
+/* -------------------------------------------------
+ * 내부 처리: Dashing 이동
+ * ------------------------------------------------- */
 void AHERO_Character::HandleDash(float /*DeltaSeconds*/)
 {
-    CURRENT_V = MAX_V;
-    const FVector ForwardDir = GetActorForwardVector();
-    AddMovementInput(ForwardDir, 1.0f);
+	// 돌진 중에는 무조건 최고속도 유지
+	CURRENT_V = MAX_V;
+
+	// 바라보는 방향으로 계속 이동
+	const FVector ForwardDir = GetActorForwardVector();
+	AddMovementInput(ForwardDir, 1.0f);
 }
 
-// 일반 이동
+
+/* -------------------------------------------------
+ * 내부 처리: 일반 이동(가속/감속)
+ * ------------------------------------------------- */
 void AHERO_Character::HandleMovement(float DeltaSeconds)
 {
-    if (bIsAccelerating) CURRENT_V += PLUS_V * DeltaSeconds;
-    else CURRENT_V -= MIUS_V * DeltaSeconds;
+	if (bIsAccelerating)
+	{
+		// 가속 중이라면 속도 증가
+		CURRENT_V += PLUS_V * DeltaSeconds;
+	}
+	else
+	{
+		// 가속 중이 아니면 속도 감소
+		CURRENT_V -= MIUS_V * DeltaSeconds;
+	}
 
-    CURRENT_V = FMath::Clamp(CURRENT_V, 0.0f, MAX_V);
+	// 속도를 [0, MAX_V] 범위로 제한
+	if (CURRENT_V < 0.0f)
+	{
+		CURRENT_V = 0.0f;
+	}
+	if (CURRENT_V > MAX_V)
+	{
+		CURRENT_V = MAX_V;
+	}
 
-    if (CURRENT_V > 0.0f)
-    {
-        const FVector ForwardDir = GetActorForwardVector();
-        AddMovementInput(ForwardDir, 1.0f);
-    }
+	// 속도가 양수면 앞으로 계속 이동
+	if (CURRENT_V > 0.0f)
+	{
+		const FVector ForwardDir = GetActorForwardVector();
+		AddMovementInput(ForwardDir, 1.0f);
+	}
 }
 
-// 레벨 스탯
+
+/* -------------------------------------------------
+ * 레벨 기반 스탯 재계산
+ * ------------------------------------------------- */
 void AHERO_Character::ApplyLevelStats()
 {
-    MAX_V = BASE_MAX_V + INC_MAX_V_PER_LVL * (static_cast<float>(Level) - 1.0f);
-    PLUS_V = BASE_PLUS_V + INC_PLUS_V_PER_LVL * (static_cast<float>(Level) - 1.0f);
+	// MAX_V = BASE_MAX_V + (Level - 1) * INC_MAX_V_PER_LVL
+	MAX_V = BASE_MAX_V + INC_MAX_V_PER_LVL * (static_cast<float>(Level) - 1.0f);
+
+	// PLUS_V = BASE_PLUS_V + (Level - 1) * INC_PLUS_V_PER_LVL
+	PLUS_V = BASE_PLUS_V + INC_PLUS_V_PER_LVL * (static_cast<float>(Level) - 1.0f);
+
+	// MIUS_V와 Weight 등은 현재 버전에서는 레벨 비례 변화 없음
 }
 
-// 내부 레벨업
+
+/* -------------------------------------------------
+ * 내부 레벨업 처리
+ * ------------------------------------------------- */
 void AHERO_Character::LevelUpInternal()
 {
-    const int32 OldLevel = Level;
-    const float OldHP = HP;
+	// (알림용) 이전의 레벨/HP 백업
+	const int32 OldLevel = Level;
+	const float OldHP = HP;
 
-    Level += 1;
+	// 레벨 증가
+	Level += 1;
 
-    ApplyLevelStats();
+	// 이동/가속 스탯 다시 계산
+	ApplyLevelStats();
 
-    HP = MaxHP;
+	// HP 최대치 증가 규칙이 있다면 여기서 MaxHP 갱신 후 풀회복하세요.
+	// 현재 버전에선 MaxHP 고정 → HP만 MaxHP로 회복
+	HP = MaxHP;
 
-    if (CURRENT_V > MAX_V) CURRENT_V = MAX_V;
+	// 현재 속도가 새 MAX_V를 넘지 않게
+	if (CURRENT_V > MAX_V)
+	{
+		CURRENT_V = MAX_V;
+	}
 
-    OnHeroLevelUp.Broadcast(OldLevel, Level);
+	// 레벨업 알림 (틱 없음)
+	OnHeroLevelUp.Broadcast(OldLevel, Level);
 
-    if (!FMath::IsNearlyEqual(OldHP, HP))
-    {
-        OnHPChanged.Broadcast(OldHP, HP, HP - OldHP);
-    }
+	// 레벨업 과정에서 HP가 실제로 변했으면 HP 변경 알림
+	if (!FMath::IsNearlyEqual(OldHP, HP))
+	{
+		OnHPChanged.Broadcast(OldHP, HP, HP - OldHP);
+	}
 }
 
-// HP
-void AHERO_Character::ApplyDamage(float DamageAmount)
-{
-    if (DamageAmount <= 0.f) return;
 
-    const float OldHPLocal = HP;
-    HP = FMath::Clamp(HP - DamageAmount, 0.f, MaxHP);
-
-    if (!FMath::IsNearlyEqual(OldHPLocal, HP))
-    {
-        OnHPChanged.Broadcast(OldHPLocal, HP, HP - OldHPLocal);
-        if (OldHPLocal > 0.f && HP <= 0.f) OnHeroDeath.Broadcast();
-    }
-}
+/* -------------------------------------------------
+ * HP 관련 공개 함수
+ * ------------------------------------------------- */
+//void AHERO_Character::ApplyDamage(float DamageAmount)
+//{
+//	if (DamageAmount <= 0.f) return;
+//
+//	const float OldHP = HP;
+//	HP = FMath::Clamp(HP - DamageAmount, 0.f, MaxHP);
+//
+//	// HP가 실제로 바뀐 경우에만 알림
+//	if (!FMath::IsNearlyEqual(OldHP, HP))
+//	{
+//		OnHPChanged.Broadcast(OldHP, HP, HP - OldHP);
+//
+//		// 사망(OldHP>0 → HP==0) 시 알림
+//		if (OldHP > 0.f && HP <= 0.f)
+//		{
+//			OnHeroDeath.Broadcast();
+//			// 사망 처리)를 여기에서 추가
+//		}
+//	}
+//}
 
 void AHERO_Character::Heal(float HealAmount)
 {
-    if (HealAmount <= 0.f) return;
+	if (HealAmount <= 0.f) return;
 
-    const float OldHPLocal = HP;
-    HP = FMath::Clamp(HP + HealAmount, 0.f, MaxHP);
+	const float OldHP = HP;
+	HP = FMath::Clamp(HP + HealAmount, 0.f, MaxHP);
 
-    if (!FMath::IsNearlyEqual(OldHPLocal, HP))
-    {
-        OnHPChanged.Broadcast(OldHPLocal, HP, HP - OldHPLocal);
-    }
+	//  HP가 실제로 바뀐 경우에만 알림
+	if (!FMath::IsNearlyEqual(OldHP, HP))
+	{
+		OnHPChanged.Broadcast(OldHP, HP, HP - OldHP);
+	}
 }
 
+
+/* -------------------------------------------------
+ * 레벨업 공개 함수 (블루프린트 등에서 호출)
+ * ------------------------------------------------- */
 void AHERO_Character::ForceLevelUp()
 {
-    LevelUpInternal();
+	LevelUpInternal();
 }
 
-// 입력
+
+/* -------------------------------------------------
+ * 입력 콜백
+ * ------------------------------------------------- */
+
+ // 가속/감속 토글 (IA_HERO_Accelerate → bool)
 void AHERO_Character::Input_Accelerate(const FInputActionValue& Value)
 {
-    const bool bPressed = Value.Get<bool>();
-    bIsAccelerating = bPressed;
+	const bool bPressed = Value.Get<bool>();
+	bIsAccelerating = bPressed;
 }
 
+// 시야 회전 (IA_HERO_Look → Vector2D)
 void AHERO_Character::Input_Look(const FInputActionValue& Value)
 {
-    const FVector2D LookAxis = Value.Get<FVector2D>();
-    AddControllerYawInput(LookAxis.X);
-    AddControllerPitchInput(LookAxis.Y);
+	const FVector2D LookAxis = Value.Get<FVector2D>();
+
+	// 카메라 회전 = 컨트롤러 회전
+	AddControllerYawInput(LookAxis.X);
+	AddControllerPitchInput(LookAxis.Y);
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	bUseControllerRotationYaw = true;
+
 }
 
+// 대쉬 스킬 (IA_HERO_DashSkill)
 void AHERO_Character::Input_DashSkill(const FInputActionValue& /*Value*/)
 {
-    if (MeteorState != EMeteorState::None) return;
+	// Normal 상태에서 쿨다운이 0이면 조준 상태로 진입
+	if (CurrentSkillState == ESkillState::Normal && DashCooldownRemaining <= 0.0f)
+	{
+		CurrentSkillState = ESkillState::AimingDash;
+		return;
+	}
 
-    if (CurrentSkillState == ESkillState::Normal && DashCooldownRemaining <= 0.0f)
-    {
-        CurrentSkillState = ESkillState::AimingDash;
-        return;
-    }
+	// 조준 상태에서 다시 누르면 실제 돌진 시작
+	if (CurrentSkillState == ESkillState::AimingDash)
+	{
+		CurrentSkillState = ESkillState::Dashing;
+		DashTimer = DashDuration;
+		DashCooldownRemaining = DashCooldown;
 
-    if (CurrentSkillState == ESkillState::AimingDash)
-    {
-        CurrentSkillState = ESkillState::Dashing;
-        DashTimer = DashDuration;
-        DashCooldownRemaining = DashCooldown;
-        CURRENT_V = MAX_V;
-        return;
-    }
+		// 돌진 시작 즉시 최고속도까지 끌어올림
+		CURRENT_V = MAX_V;
+		return;
+	}
+
+	// 이미 Dashing이면 무시
 }
 
-// 스킬2 입력
-void AHERO_Character::Input_MeteorStrike(const FInputActionValue& /*Value*/)
+void AHERO_Character::SyncSizeToScale() // 크기 증가 함수 - CSM
 {
-    if (MeteorState == EMeteorState::Descending) return;
+	//스케일 크기 고정
+	SetActorScale3D(FVector(1.0f));
 
-    if (MeteorState == EMeteorState::None)
-    {
-        BeginMeteorAscend();
-        return;
-    }
+	//캡슐의 크기
+	const float BaseRadius = 42.f;
+	const float BaseHalf = 96.f;
 
-    if (MeteorState == EMeteorState::Aiming)
-    {
-        CommitMeteorStrike();
-        return;
-    }
+
+	UCapsuleComponent* Capsule = GetCapsuleComponent();
+	if (!Capsule)
+	{
+		return;
+	}
+	//캡슐 크기 증가
+	Capsule->SetCapsuleSize(BaseRadius * SizeScale, BaseHalf * SizeScale, true);
+
+
+	if (USkeletalMeshComponent* mesh = GetMesh())
+	{
+		//메시 크기 증가
+		mesh->SetRelativeScale3D(FVector(SizeScale));
+
+		//발 높이 보정
+		const float NewHalf = BaseHalf * SizeScale;
+		mesh->SetRelativeLocation(FVector(0, 0, -NewHalf));
+
+	}
 }
 
-// 스킬2 상승
-void AHERO_Character::BeginMeteorAscend()
+//사용 안함
+void AHERO_Character::SetCurrentHealth(float NewValue)
 {
-    if (UCharacterMovementComponent* Move = GetCharacterMovement())
-    {
-        MeteorStartZ = GetActorLocation().Z;
-        MeteorTargetZ = MeteorStartZ + MeteorTargetHeight;
-
-        MeteorSavedGravityScale = Move->GravityScale;
-        Move->GravityScale = 0.f;
-        Move->StopMovementImmediately();
-        Move->Velocity = FVector::ZeroVector;
-    }
-
-    MeteorState = EMeteorState::Ascending;
-
-    if (MeteorCursorDecal) MeteorCursorDecal->SetHiddenInGame(true);
+	HP = NewValue;
+	if (HP <= 0.f)
+	{
+		OnDead();
+	}
 }
 
-// 스킬2 틱
-void AHERO_Character::TickMeteor(float DeltaSeconds)
+
+void AHERO_Character::EnableRagdollAndImpulse(const FVector& Impulse)
 {
-    if (MeteorState == EMeteorState::Ascending)
-    {
-        FVector P = GetActorLocation();
-        P.Z += MeteorAscendSpeed * DeltaSeconds;
-
-        if (P.Z >= MeteorTargetZ)
-        {
-            P.Z = MeteorTargetZ;
-            SetActorLocation(P);
-            BeginMeteorAiming();
-        }
-        else
-        {
-            SetActorLocation(P);
-        }
-        return;
-    }
-
-    if (MeteorState == EMeteorState::Aiming)
-    {
-        FVector P = GetActorLocation();
-        P.Z = MeteorTargetZ;
-        SetActorLocation(P);
-
-        UpdateMeteorCursor();
-    }
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		if (!MeshComp->IsSimulatingPhysics())
+		{
+			MeshComp->SetSimulatePhysics(true);
+			MeshComp->SetCollisionProfileName(TEXT("Ragdoll"));
+			if (UCapsuleComponent* Cap = GetCapsuleComponent())
+			{
+				Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+		}
+		MeshComp->AddImpulse(Impulse, NAME_None, true);
+	}
 }
 
-// 스킬2 조준 진입
-void AHERO_Character::BeginMeteorAiming()
+void AHERO_Character::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* Other,
+	UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-    MeteorState = EMeteorState::Aiming;
+	if (!Other || !CombatComp) return;
 
-    if (UCharacterMovementComponent* Move = GetCharacterMovement())
-    {
-        Move->GravityScale = 0.f;
-        Move->StopMovementImmediately();
-        Move->Velocity = FVector::ZeroVector;
-    }
+	TScriptInterface<IHitDamageable> Me(this);
+	TScriptInterface<IHitDamageable> Target(Other);
+	if (!Me || !Target) return;
 
-    if (MeteorCursorDecal) MeteorCursorDecal->SetHiddenInGame(false);
-}
+	const FRoleDecision R = CombatComp->DecideRoles(Me, Target, /*bIgnoreLevel=*/false);
+	if (!R.bValid) return;
 
-// 스킬2 커서 갱신
-void AHERO_Character::UpdateMeteorCursor()
-{
-    bMeteorAimValid = false;
-    if (!CameraComp) return;
+	AActor* AttackerActor = Cast<AActor>(R.Attacker.GetObject());
+	AActor* DefenderActor = Cast<AActor>(R.Defender.GetObject());
+	if (!AttackerActor || !DefenderActor) return;
 
-    const FVector Start = CameraComp->GetComponentLocation();
-    const FVector Dir = CameraComp->GetForwardVector();
-    const FVector End = Start + Dir * MeteorAimMaxDistance;
+	FVector Dir = DefenderActor->GetActorLocation() - AttackerActor->GetActorLocation();
+	if (Dir.IsNearlyZero()) { Dir = AttackerActor->GetActorForwardVector(); }
+	Dir = Dir.GetSafeNormal();
 
-    FHitResult Hit;
-    FCollisionQueryParams Params(SCENE_QUERY_STAT(MeteorTrace), false, this);
+	CombatComp->ApplyImpactDamage(R.Attacker, R.Defender, Dir);
 
-    const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params);
-
-    if (bHit)
-    {
-        bMeteorAimValid = true;
-        MeteorAimLocation = Hit.Location;
-
-        if (MeteorCursorDecal)
-        {
-            const FRotator DecalRot = FRotationMatrix::MakeFromZ(Hit.Normal).Rotator();
-            const FVector  DecalPos = Hit.Location + Hit.Normal * 2.f;
-            MeteorCursorDecal->SetWorldLocationAndRotation(DecalPos, DecalRot);
-        }
-    }
-}
-
-// 스킬2 커밋
-void AHERO_Character::CommitMeteorStrike()
-{
-    FVector Target = GetActorLocation();
-
-    if (bMeteorAimValid)
-    {
-        Target.X = MeteorAimLocation.X;
-        Target.Y = MeteorAimLocation.Y;
-    }
-    Target.Z = MeteorTargetZ;
-
-    SetActorLocation(Target, false);
-
-    if (MeteorCursorDecal) MeteorCursorDecal->SetHiddenInGame(true);
-
-    MeteorState = EMeteorState::Descending;
-
-    if (UCharacterMovementComponent* Move = GetCharacterMovement())
-    {
-        Move->GravityScale = MeteorSavedGravityScale;
-        Move->Velocity = FVector(0.f, 0.f, -MeteorFallSpeed);
-    }
-}
-
-// 착지
-void AHERO_Character::Landed(const FHitResult& Hit)
-{
-    Super::Landed(Hit);
-
-    if (MeteorState == EMeteorState::Descending)
-    {
-        MeteorState = EMeteorState::None;
-
-        if (MeteorCursorDecal) MeteorCursorDecal->SetHiddenInGame(true);
-
-        if (MeteorAOESphereClass)
-        {
-            FActorSpawnParameters SP;
-            AActor* AOE = GetWorld()->SpawnActor<AActor>(MeteorAOESphereClass, Hit.ImpactPoint, FRotator::ZeroRotator, SP);
-            if (AOE && MeteorAOESphereLifeSeconds > 0.f)
-            {
-                AOE->SetLifeSpan(MeteorAOESphereLifeSeconds);
-            }
-        }
-    }
-}
-
-/* =========================
-   경험치 함수 
-   ========================= */
-
-void AHERO_Character::AddExp(float Amount)
-{
-    if (Amount <= 0.f) return;
-
-    EXP += Amount;
-
-    if (EXP >= MAX_EXP) // 고정 100
-    {
-        EXP = 0.f;       // 초기화
-        LevelUpInternal();
-    }
-}
-
-float AHERO_Character::GetExpProgress01() const
-{
-    const float Den = (MAX_EXP > 0.f ? MAX_EXP : 1.f);
-    return FMath::Clamp(EXP / Den, 0.f, 1.f);
+	if (DefenderActor == this)
+	{
+		CombatComp->ApplyCollisionFeedbackForDefender(Me, AttackerActor, Hit);
+	}
 }
