@@ -6,6 +6,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
+#include "ObjectPoolManager.h"
+#include "AiTestMonster.h"
 
 ATeam13_GameState::ATeam13_GameState()
 {
