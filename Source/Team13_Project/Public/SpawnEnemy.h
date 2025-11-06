@@ -31,7 +31,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
 	UDataTable* EnemyDataTable;
 
-	FEnemySpawnRow* GetRandomEnemy() const;
 	AActor* SpawnEnemy(TSubclassOf<AActor> EnemyClass);
 	FVector GetRandomPointInVolume_Sphere() const;
 
@@ -60,7 +59,7 @@ public:
 		bool bFromSweep,
 		const FHitResult& SweepResult
 	);
-
+	FEnemySpawnRow* GetRandomEnemy();
 	//다시 reset해서 적 생성하는 함수
 	void ResetSpawnState();
 
