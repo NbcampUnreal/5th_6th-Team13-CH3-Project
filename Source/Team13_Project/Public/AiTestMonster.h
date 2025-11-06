@@ -6,6 +6,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseMonsterCharacter.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "AiTestMonster.generated.h"
 
 
@@ -14,6 +15,8 @@
  */
 
 class AHERO_Character; // 플레이어 클래스 전방 선언
+class AAIController;
+
 UCLASS()
 class TEAM13_PROJECT_API AAiTestMonster : public ABaseMonsterCharacter
 {
@@ -28,6 +31,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "AI")
 	float RunSpeed = 600.0f;
+	AAIController* AICon;
+	UBlackboardComponent* BB;
+	int32 DesiredStencilValue;
 protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual void BeginPlay() override;

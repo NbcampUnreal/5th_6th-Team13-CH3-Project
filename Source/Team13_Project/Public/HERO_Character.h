@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "HitDamageable.h" // 데미지 인터페이스
 #include "HERO_Character.generated.h"
 
 /**
@@ -14,29 +15,42 @@
 UENUM(BlueprintType)
 enum class ESkillState : uint8
 {
-	Normal      UMETA(DisplayName = "Normal"),
-	AimingDash  UMETA(DisplayName = "AimingDash"),
-	Dashing     UMETA(DisplayName = "Dashing")
+	Normal,
+	AimingDash,
+	Dashing
 };
+
+/* ===========================
+ *  알림(이벤트) 델리게이트 타입 선언
+ *  레벨업/HP변경/사망 알림
+ * =========================== */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHeroLevelUp, int32, OldLevel, int32, NewLevel);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnHPChanged, float, OldHP, float, NewHP, float, Delta);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHeroDeath);
 
 class USpringArmComponent;
 class UCameraComponent;
-class UInputMappingContext;
-class UInputAction;
+//class UInputMappingContext;
+//class UInputAction;
 class UCharacterMovementComponent;
+class UCombatComponent;
 
 /**
  * AHERO_Character
  *  - ACharacter 기반: 캡슐 충돌, 중력, 지면 걷기, 회전 처리 등 언리얼 기본 사람형 이동을 자동으로 가짐
- *  - 우리의 이동/가속/대쉬/스탯 시스템을 통합
+ *  - 이동/가속/대쉬/스탯 시스템을 통합
  */
 UCLASS()
-class TEAM13_PROJECT_API AHERO_Character : public ACharacter
+class TEAM13_PROJECT_API AHERO_Character : public ACharacter, public IHitDamageable
 {
 	GENERATED_BODY()
 
 public:
 	AHERO_Character();
+
+	// AnimBP에서 읽기용(스킬 상태 Getter)
+	UFUNCTION(BlueprintPure, Category = "Skill")
+	ESkillState GetSkillState() const { return CurrentSkillState; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -56,9 +70,14 @@ protected:
 	/* ===========================
 	 *  입력 처리 콜백
 	 * =========================== */
-	void Input_Accelerate(const FInputActionValue& Value); 
-	void Input_Look(const FInputActionValue& Value);       
-	void Input_DashSkill(const FInputActionValue& Value); 
+	void Input_Accelerate(const FInputActionValue& Value);
+	void Input_Look(const FInputActionValue& Value);
+	void Input_DashSkill(const FInputActionValue& Value);
+
+	//충돌 감지 함수
+	UFUNCTION()
+	void OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* Other, UPrimitiveComponent* OtherComp,
+		FVector NormalImpulse, const FHitResult& Hit);
 
 public:
 	/* ===========================
@@ -78,17 +97,17 @@ public:
 	 *  Enhanced Input 설정
 	 * =========================== */
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputMappingContext* IMC_HERO;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputMappingContext* IMC_HERO;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* IA_HERO_Look;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputAction* IA_HERO_Look;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* IA_HERO_Accelerate;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputAction* IA_HERO_Accelerate;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* IA_HERO_DashSkill;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputAction* IA_HERO_DashSkill;
 
 	/* ===========================
 	 *  이동/가속 관련 스탯
@@ -139,6 +158,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
 	float Weight;
 
+	// 크기 계수 - CSM
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
+	float SizeScale = 1.0f;
+
 	/* ===========================
 	 *  HP / 레벨업 관련
 	 * =========================== */
@@ -151,16 +174,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
 	float MaxHP;
 
-	// 레벨당 MaxHP 증가량
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
-	float HPPerLevelGain;
-
 	/* ===========================
 	 *  스킬(대쉬) 관련
 	 * =========================== */
 
+	 // 현재 스킬 상태(AnimBP에서 읽음)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
-	ESkillState CurrentSkillState;
+	ESkillState CurrentSkillState = ESkillState::Normal;
 
 	// 돌진 스킬 유지기간
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill")
@@ -177,6 +197,18 @@ public:
 	// 현재 남은 쿨다운 시간
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
 	float DashCooldownRemaining;
+
+	/* ===========================
+	 *  알림 이벤트 (BP에서 Bind 가능, 틱 사용 없음)
+	 * =========================== */
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnHeroLevelUp OnHeroLevelUp;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnHPChanged OnHPChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnHeroDeath OnHeroDeath;
 
 public:
 	/* ===========================
@@ -196,8 +228,8 @@ public:
 	int32 GetHeroLevel() const { return Level; }
 
 	// 피해 입기
-	UFUNCTION(BlueprintCallable, Category = "HP")
-	void ApplyDamage(float DamageAmount);
+	/*UFUNCTION(BlueprintCallable, Category = "HP")
+	void ApplyDamage(float DamageAmount);*/
 
 	// 회복
 	UFUNCTION(BlueprintCallable, Category = "HP")
@@ -206,4 +238,28 @@ public:
 	// 강제로 레벨업 (테스트용)
 	UFUNCTION(BlueprintCallable, Category = "HP")
 	void ForceLevelUp();
+
+	// 크기증가 함수 - CSM
+	void SyncSizeToScale();
+	//데미지 관련 함수들
+	virtual float GetCurrentHealth() const override { return HP; }
+	virtual float GetMaxHealth() const override { return MaxHP; }
+	virtual void  SetCurrentHealth(float NewValue) override;
+
+	virtual int32 GetLevel() const override { return GetHeroLevel(); }
+	virtual float GetSizeScale() const override { return GetActorScale3D().GetMax(); }
+
+	virtual float GetMaxSpeed() const override { return MAX_V; }
+	virtual float GetCurrentSpeed() const override { return GetVelocity().Size(); }
+
+	virtual bool  IsDead() const override { return HP <= 0.f; }
+	virtual void  OnDead() override { 
+		OnHeroDeath.Broadcast();
+
+	}
+
+	virtual void  EnableRagdollAndImpulse(const FVector& Impulse) override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	UCombatComponent* CombatComp;
 };

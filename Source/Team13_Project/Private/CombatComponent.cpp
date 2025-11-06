@@ -9,6 +9,14 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "Components/PrimitiveComponent.h"
+#include "Sound/SoundBase.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
+#include "CombatFeedbackSettings.h"
+#include "Components/MeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Engine/World.h"
+
 
 
 static void OrderPair(FRoleDecision& Out,
@@ -82,44 +90,104 @@ float UCombatComponent::ComputeImpactDamage(const TScriptInterface<IHitDamageabl
     const float MassTerm = FMath::Max(MassRatio - 1.f, 0.f);
 
     return H * (Settings.ImpactWeight * ImpactFactor + Settings.MassWeight * MassTerm);
+
 }
 
-void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>& Attacker,const TScriptInterface<IHitDamageable>& Defender, const FVector& ImpactDirection) const
+void UCombatComponent::InitializeComponent()
 {
-    if (!Attacker || !Defender || Defender->IsDead()) return;
+    Super::InitializeComponent();
+
+    if (bFeedbackInitialized)
+        return;
+
+    const UCombatFeedbackSettings* GlobalSettings = GetDefault<UCombatFeedbackSettings>();
+    if (!GlobalSettings)
+        return;
+
+    // 전역 기본 사운드 / 이펙트 자동 주입
+    if (Feedback.HitSFX == nullptr && GlobalSettings->DefaultHitSFX.ToSoftObjectPath().IsValid())
+    {
+        Feedback.HitSFX = GlobalSettings->DefaultHitSFX.LoadSynchronous();
+    }
+
+    if (Feedback.HitVFX == nullptr && GlobalSettings->DefaultHitVFX.ToSoftObjectPath().IsValid())
+    {
+        Feedback.HitVFX = GlobalSettings->DefaultHitVFX.LoadSynchronous();
+    }
+
+    // 튜닝 값 (비어 있을 때만)
+    if (Feedback.HitSFXVolumeBase <= 0.f)
+        Feedback.HitSFXVolumeBase = GlobalSettings->DefaultSFXVolumeBase;
+
+    if (Feedback.HitSFXPitchBase <= 0.f)
+        Feedback.HitSFXPitchBase = GlobalSettings->DefaultSFXPitchBase;
+
+    bFeedbackInitialized = true;
+}
+
+void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>& Attacker, const TScriptInterface<IHitDamageable>& Defender, const FVector& ImpactDirection) const
+{
+    if (!Attacker || !Defender || Defender->IsDead())
+        return;
+
+    AActor* DefenderActor = Cast<AActor>(Defender.GetObject());
+
+
+    if (IsInvincible(DefenderActor))
+        return;
+
+
+
 
     const float Dmg = FMath::Max(ComputeImpactDamage(Attacker, Defender), 0.f);
-
     const float NewHP = FMath::Max(Defender->GetCurrentHealth() - Dmg, 0.f);
-
     Defender->SetCurrentHealth(NewHP);
+
+
+    
 
     if (NewHP <= 0.f)
     {
 
+        
+
         Defender->OnDead();
-
         const FVector Impulse = ImpactDirection.GetSafeNormal() * Settings.RagdollImpulseScale * FMath::Max(1.f, Attacker->GetSizeScale());
-
         Defender->EnableRagdollAndImpulse(Impulse);
     }
 }
 
-void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,  float Damage,const FVector& HitImpulseDir) const
+void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,  float Damage,const FVector& HitImpulseDir) 
 {
     if (!Target || Target->IsDead())
+        return;
+    
+    AActor* TargetActor = Cast<AActor>(Target.GetObject());
+    if (IsInvincible(TargetActor))
         return;
     const float NewHP = FMath::Max(Target->GetCurrentHealth() - FMath::Max(Damage, 0.f), 0.f);
 
     Target->SetCurrentHealth(NewHP);
-
+    
     if (NewHP <= 0.f)
     {
         Target->OnDead();
+        const FVector Impulse = HitImpulseDir.GetSafeNormal() * Settings.RagdollImpulseScale;
+            
         Target->EnableRagdollAndImpulse(HitImpulseDir.GetSafeNormal() * Settings.RagdollImpulseScale);
     }
 }
-
+void UCombatComponent::ApplyFixedDamage_BP(AActor* TargetActor, float Damage, const FVector& HitImpulseDir)
+{
+    if (!TargetActor) return;
+    if (TargetActor->GetClass()->ImplementsInterface(UHitDamageable::StaticClass()))
+    {
+        TScriptInterface<IHitDamageable> TargetIntf;
+        TargetIntf.SetObject(TargetActor);
+        TargetIntf.SetInterface(Cast<IHitDamageable>(TargetActor));
+        ApplyFixedDamage(TargetIntf, Damage, HitImpulseDir);
+    }
+}
 void UCombatComponent::ApplyInstantKill(const TScriptInterface<IHitDamageable>& Target,const FVector& HitImpulseDir) const
 {
     if (!Target || Target->IsDead()) return;
@@ -156,11 +224,17 @@ FVector UCombatComponent::MakeBounceDirFromAttacker(const AActor* Attacker, floa
 
 void UCombatComponent::ApplyCollisionFeedbackForDefender(const TScriptInterface<IHitDamageable>& Defender, AActor* Attacker, const FHitResult& Hit)
 {
+
+
     if (!Defender || !Attacker || Defender->IsDead())
         return;
 
-    AActor* Def = Cast<AActor>(Defender.GetObject()); 
+   
 
+    AActor* Def = Cast<AActor>(Defender.GetObject()); 
+    if (IsInvincible(Def)) return;
+
+    StartInvincibility(Def);
     if (!Def)
         return;
 
@@ -221,7 +295,247 @@ void UCombatComponent::ApplyCollisionFeedbackForDefender(const TScriptInterface<
                     }
                 }, Feedback.TempResetDelay, false);
         }
+        // 넉백 계산 및 LaunchCharacter 적용된 뒤:
+        PlayHitEffects(Def, Impact, Hit.ImpactPoint, Dir);
 
         OnFeedbackPlayed.Broadcast(Impact, Dir, Hit.ImpactPoint);
+        
+
+       
     }
+
+    
+
+}
+
+void UCombatComponent::ForEachPrimitive(AActor* Target, TFunctionRef<void(UPrimitiveComponent*)> Fn)
+{
+    if (!Target) return;
+
+    TArray<UActorComponent*> Components;
+    Target->GetComponents(Components);
+
+    for (UActorComponent* Comp : Components)
+    {
+        if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Comp))
+        {
+            Fn(Prim);
+        }
+    }
+}
+
+bool UCombatComponent::IsInvincible(AActor* Target) const
+{
+    if (!Target) return false;
+    if (const bool* bInv = InvincibleMap.Find(Target)) return *bInv;
+    return false;
+}
+
+
+float UCombatComponent::NormalizeImpact(float Impact) const
+{
+    const float MinI = Feedback.ImpactMin;
+    const float MaxI = Feedback.ImpactMax;
+    if (MaxI <= MinI) return 1.0f;
+    return FMath::Clamp((Impact - MinI) / (MaxI - MinI), 0.0f, 1.0f);
+}
+
+void UCombatComponent::PlayHitEffects(AActor* DefenderActor, float Impact, const FVector& ImpactPoint, const FVector& KnockDir) const
+{
+    if (!DefenderActor) return;
+
+    const float T = NormalizeImpact(Impact);
+    const FVector Loc = ImpactPoint.IsNearlyZero() ? DefenderActor->GetActorLocation() : ImpactPoint;
+
+    // SFX
+    if (Feedback.HitSFX)
+    {
+        const float Volume = FMath::Max(Feedback.HitSFXVolumeBase + Feedback.HitSFXVolumeByImpact * T, 0.0f);
+        const float Pitch = FMath::Max(Feedback.HitSFXPitchBase + Feedback.HitSFXPitchByImpact * T, 0.01f);
+
+        if (Feedback.bAttachSFXToDefender)
+        {
+            UGameplayStatics::SpawnSoundAttached(
+                Feedback.HitSFX,
+                DefenderActor->GetRootComponent(),
+                Feedback.SFXAttachSocket,
+                FVector::ZeroVector,
+                EAttachLocation::KeepRelativeOffset,
+                true,
+                Volume,
+                Pitch);
+        }
+        else
+        {
+            UGameplayStatics::PlaySoundAtLocation(
+                DefenderActor,
+                Feedback.HitSFX,
+                Loc,
+                Volume,
+                Pitch);
+        }
+    }
+
+    // VFX (Niagara)
+    if (Feedback.HitVFX)
+    {
+        const float Scale = FMath::Max(Feedback.VFXScaleBase + Feedback.VFXScaleByImpact * T, 0.01f);
+        const FRotator Rot = KnockDir.IsNearlyZero() ? FRotator::ZeroRotator : KnockDir.Rotation();
+
+        if (Feedback.bAttachVFXToDefender)
+        {
+            UNiagaraComponent* NC = UNiagaraFunctionLibrary::SpawnSystemAttached(
+                Feedback.HitVFX,
+                DefenderActor->GetRootComponent(),
+                Feedback.VFXAttachSocket,
+                Feedback.VFXOffset,
+                Rot,
+                EAttachLocation::KeepRelativeOffset,
+                true, /* bAutoDestroy */
+                true  /* bAutoActivate */);
+
+            if (NC)
+            {
+                NC->SetWorldScale3D(FVector(Scale));
+                NC->SetFloatParameter(TEXT("ImpactStrength"), T);
+            }
+        }
+        else
+        {
+            UNiagaraComponent* NC = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+                DefenderActor->GetWorld(),
+                Feedback.HitVFX,
+                Loc + Feedback.VFXOffset,
+                Rot,
+                FVector(Scale),
+                true /* bAutoDestroy */,
+                true /* bAutoActivate */);
+
+            if (NC)
+            {
+                NC->SetFloatParameter(TEXT("ImpactStrength"), T);
+            }
+        }
+    }
+}
+
+void UCombatComponent::ForEachMesh(AActor* Target, TFunctionRef<void(UMeshComponent*)> Fn)
+{
+    if (!Target) return;
+    TInlineComponentArray<UMeshComponent*> Meshes;
+    Target->GetComponents(Meshes);
+    for (UMeshComponent* M : Meshes)
+    {
+        if (IsValid(M) && M->GetNumMaterials() > 0)
+        {
+            Fn(M);
+        }
+    }
+}
+
+void UCombatComponent::EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, float Value) const
+{
+    const int32 Num = Mesh->GetNumMaterials();
+    for (int32 i = 0; i < Num; ++i)
+    {
+        UMaterialInterface* Mat = Mesh->GetMaterial(i);
+        UMaterialInstanceDynamic* MID = Cast<UMaterialInstanceDynamic>(Mat);
+        if (!MID)
+        {
+            MID = Mesh->CreateAndSetMaterialInstanceDynamic(i);
+        }
+        if (MID)
+        {
+            MID->SetScalarParameterValue(Param, Value);
+        }
+    }
+}
+
+void UCombatComponent::SetBlink(AActor* Target, bool bOn) const
+{
+    if (!Target) return;
+
+   
+    if (const UWorld* W = Target->GetWorld())
+    {
+        if (W->IsNetMode(NM_DedicatedServer)) return;
+    }
+
+    BlinkStateMap.FindOrAdd(Target) = bOn;
+
+    const FName ParamName = Feedback.BlinkScalarParam.IsNone()
+        ? FName(TEXT("HitBlink"))
+        : Feedback.BlinkScalarParam;
+
+    ForEachMesh(Target, [this, ParamName, bOn](UMeshComponent* Mesh)
+        {
+            EnsureMidAndSetScalar(Mesh, ParamName, bOn ? 1.0f : 0.0f);
+        });
+}
+
+void UCombatComponent::ToggleBlink(AActor* Target) const
+{
+    const bool* Cur = BlinkStateMap.Find(Target);
+    const bool NewState = !(Cur && *Cur);
+    SetBlink(Target, NewState);
+}
+
+void UCombatComponent::StartInvincibility(AActor* Target) const
+{
+    if (!Target) return;
+    UWorld* W = Target->GetWorld();
+    if (!W) return;
+
+    InvincibleMap.FindOrAdd(Target) = true;
+
+    // 첫 프레임에 켠다
+    SetBlink(Target, true);
+
+    // 깜빡임 타이머 (간격마다 on/off 토글)
+    if (Feedback.BlinkInterval > 0.f)
+    {
+        FTimerHandle& BlinkTh = BlinkTimerMap.FindOrAdd(Target);
+        W->GetTimerManager().SetTimer(
+            BlinkTh,
+            FTimerDelegate::CreateWeakLambda(this, [this, Target]()
+                {
+                    if (!IsValid(Target)) return;
+                    ToggleBlink(Target);
+                }),
+            Feedback.BlinkInterval,
+            true
+        );
+    }
+
+    // 무적 종료 타이머
+    FTimerHandle EndTh;
+    W->GetTimerManager().SetTimer(
+        EndTh,
+        FTimerDelegate::CreateWeakLambda(this, [this, Target]()
+            {
+                StopInvincibility(Target);
+            }),
+        Feedback.InvincibleDuration,
+        false
+    );
+}
+
+void UCombatComponent::StopInvincibility(AActor* Target) const
+{
+    if (!Target) return;
+    UWorld* W = Target->GetWorld();
+    if (!W) return;
+
+    InvincibleMap.Remove(Target);
+
+    // 깜빡임 타이머 해제
+    if (FTimerHandle* BlinkTh = BlinkTimerMap.Find(Target))
+    {
+        W->GetTimerManager().ClearTimer(*BlinkTh);
+        BlinkTimerMap.Remove(Target);
+    }
+
+    // 확실하게 끄기
+    SetBlink(Target, false);
+    BlinkStateMap.Remove(Target);
 }

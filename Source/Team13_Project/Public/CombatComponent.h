@@ -7,6 +7,8 @@
 #include "CombatComponent.generated.h"
 
 class IHitDamageable;
+class USoundBase;
+class UNiagaraSystem;
 
 USTRUCT()
 struct FImpactDamageSettings
@@ -51,6 +53,66 @@ struct FHitFeedbackSettings
 	float ImpactMin = 250.f;
 	UPROPERTY(EditAnywhere) 
 	float ImpactMax = 1200.f;
+
+	UPROPERTY(EditAnywhere, Category = "Blink")
+	FName BlinkScalarParam = TEXT("HitBlink");
+
+	// ====== [추가] 무적/블링크 ======
+	// 충돌 후 부여할 무적 시간(초)
+	UPROPERTY(EditAnywhere, Category = "Invincibility")
+	float InvincibleDuration = 1.f;
+
+	// 무적 중 깜빡임 간격(초)
+	UPROPERTY(EditAnywhere, Category = "Invincibility")
+	float BlinkInterval = 0.2f;
+
+	// 깜빡임을 CustomDepth로 표시
+	UPROPERTY(EditAnywhere, Category = "Invincibility")
+	bool bBlinkUsingCustomDepth = true;
+
+	// ===== SFX =====
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	USoundBase* HitSFX = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	float HitSFXVolumeBase = 0.9f;
+
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	float HitSFXPitchBase = 1.0f;
+
+	// 임팩트에 비례해 추가되는 값
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	float HitSFXVolumeByImpact = 0.6f;
+
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	float HitSFXPitchByImpact = 0.2f;
+
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	bool bAttachSFXToDefender = false;
+
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	FName SFXAttachSocket = NAME_None;
+
+	// ===== VFX (Niagara) =====
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	UNiagaraSystem* HitVFX = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	FVector VFXOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	float VFXScaleBase = 1.0f;
+
+	// 임팩트에 비례해 추가되는 스케일
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	float VFXScaleByImpact = 0.5f;
+
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	bool bAttachVFXToDefender = false;
+
+	UPROPERTY(EditAnywhere, Category = "SFX/VFX")
+	FName VFXAttachSocket = NAME_None;
+
 };
 
 
@@ -91,7 +153,7 @@ public:
 
 	// 고정 데미지(돌진/투척)
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,float Damage,const FVector& HitImpulseDir) const;
+	void ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,float Damage,const FVector& HitImpulseDir) ;
 
 	// 즉사(특수 원거리, 트랩 등)
 	UFUNCTION(BlueprintCallable, Category = "Combat")
@@ -104,9 +166,43 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Feedback")
     FOnFeedbackPlayed OnFeedbackPlayed;
 
+	UFUNCTION(BlueprintCallable, Category = "Combat|Setup")
+	void InitializeComponent();
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ApplyFixedDamage_BP(AActor* TargetActor, float Damage, const FVector& HitImpulseDir);
+
+
 private:
 	float ComputeImpactDamage(const TScriptInterface<IHitDamageable>& Attacker,const TScriptInterface<IHitDamageable>& Defender) const;
 
 	static FVector MakeBounceDirFromAttacker(const AActor* Attacker, float UpRatio);
-		
+
+
+	mutable TMap<TWeakObjectPtr<AActor>, bool> InvincibleMap;
+	mutable TMap<TWeakObjectPtr<AActor>, FTimerHandle> BlinkTimerMap;
+
+	mutable TMap<TWeakObjectPtr<AActor>, bool> BlinkStateMap;
+
+	void StartInvincibility(AActor* Target) const;
+	void StopInvincibility(AActor* Target) const;
+
+	void ToggleBlink(AActor* Target) const;              // on/off 토글
+	void SetBlink(AActor* Target, bool bOn) const;       // 명시 on/off
+
+	 //
+	static void ForEachMesh(AActor* Target, TFunctionRef<void(UMeshComponent*)> Fn);
+
+	 //
+	void EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, float Value) const;
+
+	bool IsInvincible(AActor* Target) const;
+	
+
+	
+	static void ForEachPrimitive(AActor* Target, TFunctionRef<void(UPrimitiveComponent*)> Fn);
+
+	float NormalizeImpact(float Impact) const;
+	void PlayHitEffects(AActor* DefenderActor, float Impact, const FVector& ImpactPoint, const FVector& KnockDir) const;
+
+	bool bFeedbackInitialized = false;
 };
