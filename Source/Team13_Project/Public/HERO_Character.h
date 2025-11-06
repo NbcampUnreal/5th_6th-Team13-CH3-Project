@@ -45,6 +45,7 @@ class UInputAction;
 class UCharacterMovementComponent;
 class UDecalComponent;
 class UMaterialInterface;
+class AFixedDamageProjectile;
 class UCombatComponent;
 
 /**
@@ -63,6 +64,15 @@ public:
 	// AnimBP에서 읽기용(스킬 상태 Getter)
 	UFUNCTION(BlueprintPure, Category = "Skill")
 	ESkillState GetSkillState() const { return CurrentSkillState; }
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Projectile")
+    TSubclassOf<AFixedDamageProjectile> ProjectileClass_Player;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* IA_HERO_Throw;
+
+    UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
+    void FireProjectile();
 
 protected:
     virtual void BeginPlay() override;

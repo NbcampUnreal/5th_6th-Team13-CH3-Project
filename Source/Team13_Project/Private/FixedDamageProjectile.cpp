@@ -125,8 +125,11 @@ void AFixedDamageProjectile::TryApplyDamageTo(AActor* OtherActor, const FHitResu
         Dir = ProjectileMovement ? ProjectileMovement->Velocity.GetSafeNormal() : GetActorForwardVector();
     }
 
+    
     Combat->ApplyFixedDamage(Target, Damage, Dir);
-    Combat->ApplyCollisionFeedbackForDefender(Target, this, Hit);
+
+    AActor* AttackerActor = GetInstigator() ? static_cast<AActor*>(GetInstigator()) : this;
+    Combat->ApplyCollisionFeedbackForDefender(Target, AttackerActor, Hit);
     if (bDestroyOnHit)
         Destroy();
 }

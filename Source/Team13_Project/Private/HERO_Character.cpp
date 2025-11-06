@@ -13,7 +13,7 @@
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "Team13_PlayerController.h"
-
+#include "FixedDamageProjectile.h"
 #include "Components/DecalComponent.h"
 #include "DrawDebugHelpers.h"
 
@@ -161,6 +161,13 @@ void AHERO_Character::BeginPlay()
 		}
 	}
 	// -----------------------------------------------------------------------------------
+
+	Tags.AddUnique(FName("Player"));
+
+	if (CombatComp)
+	{
+		CombatComp->InitializeComponent();
+	}
 }
 
 void AHERO_Character::Tick(float DeltaSeconds)
@@ -243,8 +250,13 @@ void AHERO_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 			{
 				UE_LOG(LogTemp, Error, TEXT("Dash X"));
 			}
-		}
 
+
+		}
+		if (IA_HERO_Throw)
+		{
+			EI->BindAction(IA_HERO_Throw, ETriggerEvent::Started, this, &AHERO_Character::FireProjectile);
+		}
 		// IA_HERO_MeteorStrike 바인딩
 		if (IA_HERO_MeteorStrike)
 		{
@@ -737,24 +749,7 @@ void AHERO_Character::Landed(const FHitResult& Hit)
 	}
 }
 
-// HP 데미지
-void AHERO_Character::ApplyDamage(float DamageAmount)
-{
-	if (DamageAmount <= 0.f) return;
 
-	const float OldHPLocal = HP;
-	HP = FMath::Clamp(HP - DamageAmount, 0.f, MaxHP);
-
-	if (!FMath::IsNearlyEqual(OldHPLocal, HP))
-	{
-		OnHPChanged.Broadcast(OldHPLocal, HP, HP - OldHPLocal);
-
-		if (OldHPLocal > 0.f && HP <= 0.f)
-		{
-			OnHeroDeath.Broadcast();
-		}
-	}
-}
 
 
 //경험치 함수 
@@ -775,4 +770,32 @@ float AHERO_Character::GetExpProgress01() const
 {
 	const float Den = (MAX_EXP > 0.f ? MAX_EXP : 1.f);
 	return FMath::Clamp(EXP / Den, 0.f, 1.f);
+}
+
+void AHERO_Character::FireProjectile()
+{
+	if (!ProjectileClass_Player) return;
+
+	const FVector CamLoc = CameraComp ? CameraComp->GetComponentLocation() : GetActorLocation();
+	const FRotator CamRot = CameraComp ? CameraComp->GetComponentRotation() : GetActorRotation();
+	const FVector CamForward = CamRot.Vector();
+
+	const FVector SpawnLoc = CamLoc + CamForward * 100.f; // 카메라 앞 오프셋
+	const FRotator SpawnRot = CamRot;
+
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	Params.Instigator = this;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	AFixedDamageProjectile* Proj =
+		GetWorld()->SpawnActor<AFixedDamageProjectile>(ProjectileClass_Player, SpawnLoc, SpawnRot, Params);
+	if (!Proj) return;
+
+	if (CombatComp)
+	{
+		Proj->SetSourceCombat(CombatComp);
+	}
+
+	
 }
