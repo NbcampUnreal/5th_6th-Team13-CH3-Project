@@ -143,14 +143,6 @@ void ATeam13_GameState::OnGameOver()
 			{
 				Team13_PlayerController->ShowEndMenu(false);
 			}
-			/*if (HERO_Character->IsDead())
-			{
-				Team13_PlayerController->ShowEndMenu(true);
-			}
-			else 
-			{
-				Team13_PlayerController->ShowEndMenu(false);
-			}*/
 		}
 	}
 }

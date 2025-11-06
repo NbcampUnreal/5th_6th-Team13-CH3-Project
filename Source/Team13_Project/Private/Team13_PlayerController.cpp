@@ -229,18 +229,6 @@ void ATeam13_PlayerController::ShowGameHUD()
 			}
 		}
 	}
-
-	//if (MainMenuWidgetClass)
-	//{
-	//	MainMenuWidgetInstance = CreateWidget<UUserWidget>(this, MainMenuWidgetClass);
-	//	if (MainMenuWidgetInstance)
-	//	{
-	//		MainMenuWidgetInstance->AddToViewport();
-	//		//마우스 커서 UI
-	//		bShowMouseCursor = true;
-	//		SetInputMode(FInputModeUIOnly());
-	//	}
-	//}
 }
 
 //게임시작
