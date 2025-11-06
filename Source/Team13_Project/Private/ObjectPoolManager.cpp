@@ -1,116 +1,175 @@
 #include "ObjectPoolManager.h"
-#include "Poolable.h"
-// Fill out your copyright notice in the Description page of Project Settings.
-
-/*
-#include "SpawnEnemy.h"
+#include "BaseMonsterCharacter.h"
 #include "AiTestMonster.h"
-#include "ObjectPoolManager.h"
-
-void UObjectPoolManager::InitializePool(TSubclassOf<AActor> ObjectClass, int32 PoolSize)
-{
-    if (!GetWorld() || EnemyPool.Num() > 0) return;  // 이미 풀 초기화됨
-
-    SpawnableEnemyClass = ObjectClass;
-
-    for (int32 i = 0; i < PoolSize; ++i)
-    {
-        AAiTestMonster* NewEnemy = GetWorld()->SpawnActor<AAiTestMonster>(ObjectClass);
-        if (NewEnemy)
-        {
-            NewEnemy->SetActorHiddenInGame(true);
-            NewEnemy->SetActorEnableCollision(false);
-            EnemyPool.Add(NewEnemy);
-        }
-    }
-}
-
-AAiTestMonster* UObjectPoolManager::GetEnemyFromPool()
-{
-    for (AAiTestMonster* Enemy : EnemyPool)
-    {
-        if (Enemy && Enemy->IsHidden())
-        {
-            Enemy->SetActorHiddenInGame(false);
-            Enemy->SetActorEnableCollision(true);
-            return Enemy;
-        }
-    }
-    return nullptr; // 풀에 없으면 nullptr 반환
-}
-
-
-void UObjectPoolManager::ReturnEnemyToPool(AAiTestMonster* Enemy)
-{
-    if (Enemy)
-    {
-        Enemy->SetActorHiddenInGame(true);
-        Enemy->SetActorEnableCollision(false);
-    }
-}
-
-*/
+#include "Poolable.h"
 
 void UObjectPoolManager::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation, AActor*& SpawnedActor)
 {
     SpawnedActor = GetActorFromPool(PoolClass, Location, Rotation);
 }
 
-void UObjectPoolManager::ReturnToPool(AActor* Poolable)
+UClass* UObjectPoolManager::GetPoolKey(UClass* InputClass)
 {
-    if (!Poolable) return;
+    if (!InputClass) return nullptr;
 
-    UClass* ActorClass = Poolable->GetClass();
+    // ABaseMonsterCharacter를 기준으로 모든 하위 클래스 묶기
+    if (InputClass->IsChildOf(AAiTestMonster::StaticClass()))
+    {
+        return AAiTestMonster::StaticClass();
+    }
 
-    if (ActorClass->ImplementsInterface(UPoolable::StaticClass()))
-    {
-        IPoolable::Execute_OnReturnToPool(Poolable);
-        Poolable->SetActorHiddenInGame(true);
-        Poolable->SetActorEnableCollision(false);
-        FPoolArray& ObjectPool = ObjectPools.FindOrAdd(ActorClass);
-        ObjectPool.Add(Poolable);
-    }
-    else
-    {
-        Poolable->Destroy();
-    }
+    // 그 외 클래스들은 자기 자신 기준
+    return InputClass;
 }
+//void UObjectPoolManager::ReturnToPool(AActor* Poolable)
+//{
+//    if (!Poolable) return;
+//
+//    UClass* ActorClass = Poolable->GetClass();
+//
+//    if (ActorClass->ImplementsInterface(UPoolable::StaticClass()))
+//    {
+//        IPoolable::Execute_OnReturnToPool(Poolable);
+//        Poolable->SetActorHiddenInGame(true);
+//        Poolable->SetActorEnableCollision(false);
+//        FPoolArray& ObjectPool = ObjectPools.FindOrAdd(ActorClass);
+//        ObjectPool.Add(Poolable);
+//    }
+//    else
+//    {
+//        Poolable->Destroy();
+//    }
+//}
+//
+//void UObjectPoolManager::InitializePool(TSubclassOf<AActor> PoolClass, int32 MaxSize)
+//{
+//    if (!PoolClass) return;
+//    UClass* KeyClass = GetPoolKey(PoolClass.Get());
+//
+//    FPoolArray& ObjectPool = ObjectPools.FindOrAdd(KeyClass);
+//
+//    if (ObjectPool.Num() >= MaxSize)
+//        return;
+//
+//    FActorSpawnParameters SpawnParams;
+//    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+//
+//    for (int32 i = 0; i < MaxSize; ++i)
+//    {
+//        AActor* NewActor = GetWorld()->SpawnActor<AActor>(PoolClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+//        if (!NewActor) continue;
+//
+//        if (NewActor->GetClass()->ImplementsInterface(UPoolable::StaticClass()))
+//        {
+//            IPoolable::Execute_OnReturnToPool(NewActor);
+//            NewActor->SetActorHiddenInGame(true);
+//            NewActor->SetActorEnableCollision(false);
+//        }
+//
+//        ObjectPool.Add(NewActor);
+//    }
+//
+//    UE_LOG(LogTemp, Log, TEXT("[ObjectPoolManager] Initialized %s pool (%d actors)"),
+//        *KeyClass->GetName(), ObjectPool.Num());
+//}
+//
+//AActor* UObjectPoolManager::GetActorFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation)
+//{
+//    FPoolArray& ObjectPool = ObjectPools.FindOrAdd(PoolClass);
+//    if (!ObjectPool.IsEmpty())
+//    {
+//        AActor* Actor = ObjectPool.Pop();
+//        if (Actor) {
+//            Actor->SetActorLocationAndRotation(Location, Rotation);
+//            Actor->SetActorHiddenInGame(false);
+//            IPoolable::Execute_OnSpawnFromPool(Actor);
+//            return Actor;
+//        }
+//    }
+//
+//    UE_LOG(LogTemp, Warning, TEXT("[ObjectPoolManager] Pool for %s is empty!"), *PoolClass->GetName());
+//    return nullptr;
+//}
 
 void UObjectPoolManager::InitializePool(TSubclassOf<AActor> PoolClass, int32 MaxSize)
 {
-    FPoolArray& ObjectPool = ObjectPools.FindOrAdd(PoolClass);
-    for (int32 i = 0; i < MaxSize; ++i) {
-        FActorSpawnParameters SpawnParams;
-        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    if (!PoolClass) return;
+    UClass* KeyClass = GetPoolKey(PoolClass.Get());
+
+    FPoolArray& ObjectPool = ObjectPools.FindOrAdd(KeyClass);
+
+    if (ObjectPool.Num() >= MaxSize)
+        return;
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    for (int32 i = 0; i < MaxSize; ++i)
+    {
         AActor* NewActor = GetWorld()->SpawnActor<AActor>(PoolClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
-        if (NewActor && PoolClass.Get()->ImplementsInterface(UPoolable::StaticClass())) {
+        if (!NewActor) continue;
+
+        if (NewActor->GetClass()->ImplementsInterface(UPoolable::StaticClass()))
+        {
             IPoolable::Execute_OnReturnToPool(NewActor);
             NewActor->SetActorHiddenInGame(true);
             NewActor->SetActorEnableCollision(false);
-            ObjectPool.Add(NewActor);
+            NewActor->RegisterAllComponents();
         }
+
+        ObjectPool.Add(NewActor);
     }
+
+    UE_LOG(LogTemp, Log, TEXT("[ObjectPoolManager] Initialized %s pool (%d actors)"),
+        *KeyClass->GetName(), ObjectPool.Num());
 }
 
 AActor* UObjectPoolManager::GetActorFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation)
 {
-    FPoolArray& ObjectPool = ObjectPools.FindOrAdd(PoolClass);
-    if (!ObjectPool.IsEmpty())
+    if (!PoolClass) return nullptr;
+
+    UClass* KeyClass = GetPoolKey(PoolClass.Get());
+    FPoolArray* ObjectPool = ObjectPools.Find(KeyClass);
+    if (!ObjectPool || ObjectPool->IsEmpty())
     {
-        AActor* Actor = ObjectPool.Pop();
-        if (Actor) {
-            Actor->SetActorLocationAndRotation(Location, Rotation);
+        UE_LOG(LogTemp, Warning, TEXT("[ObjectPoolManager] Pool empty for %s!"), *KeyClass->GetName());
+        return nullptr;
+    }
+    if (!ObjectPool->IsEmpty())
+    {
+        AActor* Actor = ObjectPool->Pop();
+        if (Actor)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Spawn Location: %s"), *Location.ToString());
+
             Actor->SetActorHiddenInGame(false);
-            IPoolable::Execute_OnSpawnFromPool(Actor);
+            Actor->SetActorLocationAndRotation(Location, Rotation);
+            Actor->SetActorEnableCollision(true);
+            if (Actor->GetClass()->ImplementsInterface(UPoolable::StaticClass()))
+            {
+                IPoolable::Execute_OnSpawnFromPool(Actor);
+            }
+
             return Actor;
         }
     }
 
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    AActor* NewActor = GetWorld()->SpawnActor<AActor>(PoolClass, Location, Rotation, SpawnParams);
-    if (NewActor && PoolClass.Get()->ImplementsInterface(UPoolable::StaticClass())) {
-        IPoolable::Execute_OnSpawnFromPool(NewActor);
-    }
-    return NewActor;
+
+    UE_LOG(LogTemp, Warning, TEXT("[ObjectPoolManager] Pool for %s (key %s) is empty!"),
+        *PoolClass->GetName(), *KeyClass->GetName());
+    return nullptr;
+}
+
+void UObjectPoolManager::ReturnToPool(AActor* Poolable)
+{
+    if (!Poolable) return;
+
+    UClass* KeyClass = GetPoolKey(Poolable->GetClass());
+    FPoolArray& ObjectPool = ObjectPools.FindOrAdd(KeyClass);
+
+    IPoolable::Execute_OnReturnToPool(Poolable);
+    Poolable->SetActorHiddenInGame(true);
+    Poolable->SetActorEnableCollision(false);
+
+    ObjectPool.Add(Poolable);
 }

@@ -6,6 +6,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
+#include "ObjectPoolManager.h"
+#include "AiTestMonster.h"
 
 ATeam13_GameState::ATeam13_GameState()
 {
@@ -18,25 +20,7 @@ void ATeam13_GameState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	/*TArray<AActor*> FoundVolumes;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnEnemy::StaticClass(), FoundVolumes);
 
-	int32 BaseSpawnCount = 40;
-	float SpawnIncreaseRate = 0.2f;
-
-	EnemyToSpawn = BaseSpawnCount + (BaseSpawnCount * SpawnIncreaseRate);
-
-	for (int32 i = 0; i < BaseSpawnCount; i++)
-	{
-		if (FoundVolumes.Num() > 0)
-		{
-			ASpawnEnemy* SpawnEnemy = Cast<ASpawnEnemy>(FoundVolumes[0]);
-			if (SpawnEnemy)
-			{
-				AActor* SpawnedActor = SpawnEnemy->SpawnRandomEnemy();
-			}
-		}
-	}*/
 	StartStage();
 
 	HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -60,6 +44,13 @@ void ATeam13_GameState::PostInitializeComponents()
 
 void ATeam13_GameState::StartStage()
 {
+	UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
+
+	if (PoolManager)
+	{
+		PoolManager->InitializePool(AAiTestMonster::StaticClass(), 10);
+	}
+
 	//HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
