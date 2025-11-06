@@ -23,14 +23,13 @@ void ATeam13_GameState::BeginPlay()
 {
 	Super::BeginPlay();
 
-<<<<<<< HEAD
+
 
 	
 
-	/*TArray<AActor*> FoundVolumes;
+	TArray<AActor*> FoundVolumes;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnEnemy::StaticClass(), FoundVolumes);
-=======
->>>>>>> f701833214f13a108984d48c8e4a5a279361ceb5
+
 
 	StartStage();
 
