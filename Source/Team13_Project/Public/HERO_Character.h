@@ -45,7 +45,6 @@ class TEAM13_PROJECT_API AHERO_Character : public ACharacter
 public:
     AHERO_Character();
 
-    // 스킬1 상태 Getter (AnimBP에서 사용)
     UFUNCTION(BlueprintPure, Category = "Skill")
     ESkillState GetSkillState() const { return CurrentSkillState; }
 
@@ -55,7 +54,6 @@ protected:
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     virtual void Landed(const FHitResult& Hit) override;
 
-    // 내부 처리
     void HandleCooldowns(float DeltaSeconds);
     void HandleDash(float DeltaSeconds);
     void HandleMovement(float DeltaSeconds);
@@ -63,15 +61,14 @@ protected:
     void ApplyLevelStats();
     void LevelUpInternal();
 
-    // 입력 콜백
     void Input_Accelerate(const FInputActionValue& Value);
     void Input_Look(const FInputActionValue& Value);
     void Input_DashSkill(const FInputActionValue& Value);
 
-    // 스킬2 입력 콜백
+    // 스킬2 입력
     void Input_MeteorStrike(const FInputActionValue& Value);
 
-    // 스킬2 내부 처리
+    // 스킬2 내부
     void BeginMeteorAscend();
     void TickMeteor(float DeltaSeconds);
     void BeginMeteorAiming();
@@ -79,7 +76,7 @@ protected:
     void CommitMeteorStrike();
 
 public:
-    // 카메라
+    // 컴포넌트
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     USpringArmComponent* SpringArmComp;
 
@@ -99,7 +96,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* IA_HERO_DashSkill;
 
-    // 스킬2 입력 액션 추가
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* IA_HERO_MeteorStrike;
 
@@ -138,6 +134,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
     float Weight;
 
+    // 경험치(고정 규칙: MAX_EXP는 100, 초과 시 레벨업하고 EXP=0)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
+    float EXP;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level/Stats")
+    float MAX_EXP;
+
     // HP
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP")
     float HP;
@@ -161,21 +164,18 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
     float DashCooldownRemaining;
 
-    // 스킬2(메테오) 커서 데칼
+    // 스킬2(메테오)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
     UDecalComponent* MeteorCursorDecal;
 
-    // 커서에 쓸 머티리얼(선택)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
     UMaterialInterface* MeteorCursorMaterial;
 
-    // 낙하 시 스폰할 구형 액터 클래스
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
     TSubclassOf<AActor> MeteorAOESphereClass;
 
-    // 메테오 파라미터
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    float MeteorTargetHeight;          // 상승 목표 Z 추가값
+    float MeteorTargetHeight;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
     float MeteorAscendSpeed;
@@ -184,12 +184,11 @@ public:
     float MeteorFallSpeed;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    float MeteorAimMaxDistance;        // 카메라 전방 트레이스 거리
+    float MeteorAimMaxDistance;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    float MeteorAOESphereLifeSeconds;  // 스폰된 구형 액터 수명(0이면 무제한)
+    float MeteorAOESphereLifeSeconds;
 
-    // 스킬2 상태값
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
     EMeteorState MeteorState = EMeteorState::None;
 
@@ -209,7 +208,7 @@ public:
     FVector MeteorAimLocation = FVector::ZeroVector;
 
 public:
-    // 이벤트 바인딩용 델리게이트
+    // 이벤트
     UPROPERTY(BlueprintAssignable, Category = "Events")
     FOnHeroLevelUp OnHeroLevelUp;
 
@@ -237,4 +236,11 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "HP")
     void ForceLevelUp();
+
+    // 경험치 
+    UFUNCTION(BlueprintCallable, Category = "Level/Stats")
+    void AddExp(float Amount);
+
+    UFUNCTION(BlueprintPure, Category = "Level/Stats")
+    float GetExpProgress01() const;
 };
