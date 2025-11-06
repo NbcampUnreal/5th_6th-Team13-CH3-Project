@@ -32,5 +32,4 @@ UTeam13_GameInstance::UTeam13_GameInstance()
 void UTeam13_GameInstance::AddToKill()
 {
 	++CurrentKill;
-	AddToKill();
 }
