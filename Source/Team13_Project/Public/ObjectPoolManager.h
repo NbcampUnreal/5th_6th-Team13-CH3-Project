@@ -13,16 +13,34 @@ struct FPoolArray {
 	UPROPERTY()
 	TArray<AActor*> ObjectPool;
 
-	bool IsEmpty() {
+	bool IsEmpty() 
+	{
 		return ObjectPool.IsEmpty();
 	}
 
-	AActor* Pop() {
+	AActor* Pop() 
+	{
 		return ObjectPool.Pop();
 	}
 
-	void Add(AActor* ActorToAdd) {
+	void Add(AActor* ActorToAdd) 
+	{
 		ObjectPool.Add(ActorToAdd);
+	}
+
+	int Num() 
+	{
+		return ObjectPool.Num();
+	}
+
+	void Empty()
+	{
+		return ObjectPool.Empty();
+	}
+
+	void Reserve(int32 M)
+	{
+		return ObjectPool.Reserve(M);
 	}
 };
 
@@ -36,13 +54,13 @@ class TEAM13_PROJECT_API UObjectPoolManager : public UWorldSubsystem
 public:
 	UFUNCTION(BlueprintCallable, Category = "Pool SubSystem")
 	void SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation, AActor*& SpawnedActor);
-
+	UFUNCTION(BlueprintCallable, Category = "Pool SubSystem")
+	UClass* GetPoolKey(UClass* InputClass);
 	UFUNCTION(BlueprintCallable, Category = "Pool SubSystem")
 	void ReturnToPool(AActor* Poolable);
 
 	UFUNCTION(BlueprintCallable, Category = "Pool SubSystem")
 	void InitializePool(TSubclassOf<AActor> PoolClass, int32 MaxSize);
-
 private:
 	TMap<UClass*, FPoolArray> ObjectPools;
 	AActor* GetActorFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation);

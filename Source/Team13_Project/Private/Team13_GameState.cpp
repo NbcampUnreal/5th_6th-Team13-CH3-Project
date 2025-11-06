@@ -1,14 +1,17 @@
 #include "Team13_GameState.h"
 #include "Team13_PlayerController.h"
 #include "Team13_GameInstance.h"
+#include "HERO_Character.h"
 #include "SpawnEnemy.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
+#include "ObjectPoolManager.h"
+#include "AiTestMonster.h"
 
 ATeam13_GameState::ATeam13_GameState()
 {
-	StageDuration = 10.f;
+	StageDuration = 1000.f;
 	CurrentStageIndex = 0;
 	MaxStageIndex = 2;
 }
@@ -17,26 +20,14 @@ void ATeam13_GameState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	/*TArray<AActor*> FoundVolumes;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnEnemy::StaticClass(), FoundVolumes);
 
-	int32 BaseSpawnCount = 40;
-	float SpawnIncreaseRate = 0.2f;
-
-	EnemyToSpawn = BaseSpawnCount + (BaseSpawnCount * SpawnIncreaseRate);
-
-	for (int32 i = 0; i < BaseSpawnCount; i++)
-	{
-		if (FoundVolumes.Num() > 0)
-		{
-			ASpawnEnemy* SpawnEnemy = Cast<ASpawnEnemy>(FoundVolumes[0]);
-			if (SpawnEnemy)
-			{
-				AActor* SpawnedActor = SpawnEnemy->SpawnRandomEnemy();
-			}
-		}
-	}*/
 	StartStage();
+
+	HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (HERO_Character)
+	{
+		HERO_Character->OnHeroDeath.AddDynamic(this, &ATeam13_GameState::OnGameOver);
+	}
 
 	GetWorldTimerManager().SetTimer(
 		HUDUpdateTimerHandle,
@@ -46,8 +37,21 @@ void ATeam13_GameState::BeginPlay()
 		true);
 }
 
+void ATeam13_GameState::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+}
+
 void ATeam13_GameState::StartStage()
 {
+	UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
+
+	if (PoolManager)
+	{
+		PoolManager->InitializePool(AAiTestMonster::StaticClass(), 10);
+	}
+
+	//HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
@@ -55,7 +59,7 @@ void ATeam13_GameState::StartStage()
 			Team13_PlayerController->ShowGameHUD();
 		}
 	}
-
+	
 	if(UGameInstance * GameInstance = GetGameInstance())
 	{
 		UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(GameInstance);
@@ -121,15 +125,26 @@ void ATeam13_GameState::OnGameOver()
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
 		{
 			Team13_PlayerController->SetPause(true);
-			Team13_PlayerController->ShowEndMenu(true); //임시
-			/*if (플레이어가 죽음 or 시간안에 레벨도달실패)
+			//Team13_PlayerController->ShowEndMenu(true); //임시
+			/*if (HERO_Character->IsDead() ||
+				(StageDuration < 0 && HERO_Character->GetHeroLevel() < 5))
 			{
 				Team13_PlayerController->ShowEndMenu(true);
 			}
-			else (성공)
+			else 
 			{
 				Team13_PlayerController->ShowEndMenu(false);
 			}*/
+			if (HERO_Character->IsDead())
+			{
+				UE_LOG(LogTemp, Error, TEXT("Death"));
+				Team13_PlayerController->ShowEndMenu(true);
+			}
+			else 
+			{
+				UE_LOG(LogTemp, Error, TEXT("Failed Death"));
+			}
+
 		}
 	}
 }
@@ -147,28 +162,13 @@ void ATeam13_GameState::UpdateHUD()
 					UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(GameInstance);
 					if (Team13_GameInstance)
 					{
-						//PlayerLevel Text
-						if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("LevelText"))))
-						{
-							LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), Team13_GameInstance->CurrentLevel)));
-						}
-						
 						//Timer Text
 						if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("TimeText"))))
 						{
 							float RemainingTime = GetWorldTimerManager().GetTimerRemaining(StageTimerHandle);
-
-							int32 DisplayTime = FMath::Max(0, FMath::CeilToInt(RemainingTime));
-
-							TimeText->SetText(FText::FromString(FString::Printf(TEXT("Time : %d"), DisplayTime)));
+							TimeText->SetText(FText::FromString(FString::Printf(TEXT("Time : %0.f"), RemainingTime)));
 						}
 
-						//HP Text
-						/*if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("HPText"))))
-						{
-							ExpText->SetText(FText::FromString(FString::Printf(TEXT("%d"), )));
-						}*/
-						
 						//Exp Text
 						if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("ExpText"))))
 						{
@@ -180,12 +180,30 @@ void ATeam13_GameState::UpdateHUD()
 						{
 							ExpText->SetText(FText::FromString(FString::Printf(TEXT("Stagt : %d"), CurrentStageIndex + 1)));
 						}
-						
-						//Speed Text
-						/*if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("SpeedText"))))
+					}
+					ACharacter* Character = PlayerController->GetCharacter();
+					if (AHERO_Character* HeroCharacter = Cast<AHERO_Character>(Character))
+					{
+						if (HeroCharacter)
 						{
-							LevelText->SetText(FText::FromString(FString::Printf(TEXT("%d"), )));
-						}*/
+							//Speed Text
+							if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("SpeedText"))))
+							{
+								LevelText->SetText(FText::FromString(FString::Printf(TEXT("%0.f"), HeroCharacter->CURRENT_V)));
+							}
+
+							//HP Text
+							if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("HPText"))))
+							{
+								ExpText->SetText(FText::FromString(FString::Printf(TEXT("%0.f"), HeroCharacter->HP)));
+							}
+
+							//PlayerLevel Text
+							if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("LevelText"))))
+							{
+								LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level)));
+							}
+						}
 					}
 				}
 			}
