@@ -191,6 +191,12 @@ void ATeam13_GameState::UpdateHUD()
 						{
 							ExpText->SetText(FText::FromString(FString::Printf(TEXT("Stagt : %d"), CurrentStageIndex + 1)));
 						}
+						
+						//Kill Text
+						if (UTextBlock* KillText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("KillText"))))
+						{
+							KillText->SetText(FText::FromString(FString::Printf(TEXT("%d"), Team13_GameInstance->CurrentKill)));
+						}
 					}
 					ACharacter* Character = PlayerController->GetCharacter();
 					if (AHERO_Character* HeroCharacter = Cast<AHERO_Character>(Character))

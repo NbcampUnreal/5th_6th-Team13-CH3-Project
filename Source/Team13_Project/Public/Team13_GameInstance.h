@@ -24,7 +24,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "GameData")
 	void AddScore(int32 Amount);
-
 	UFUNCTION(BlueprintCallable, Category = "GameData")
 	void AddToKill();
 
