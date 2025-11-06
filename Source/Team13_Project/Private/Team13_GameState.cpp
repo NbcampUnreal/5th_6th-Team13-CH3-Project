@@ -44,13 +44,6 @@ void ATeam13_GameState::PostInitializeComponents()
 
 void ATeam13_GameState::StartStage()
 {
-	UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
-
-	if (PoolManager)
-	{
-		PoolManager->InitializePool(AAiTestMonster::StaticClass(), 10);
-	}
-
 	//HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
