@@ -47,7 +47,7 @@ class UDecalComponent;
 class UMaterialInterface;
 class AFixedDamageProjectile;
 class UCombatComponent;
-
+class AFixedDamageProjectile;
 /**
  * AHERO_Character
  *  - ACharacter 기반: 캡슐 충돌, 중력, 지면 걷기, 회전 처리 등 언리얼 기본 사람형 이동을 자동으로 가짐
@@ -331,6 +331,21 @@ public:
     virtual void  OnDead() override { OnHeroDeath.Broadcast(); }
     virtual void  EnableRagdollAndImpulse(const FVector& Impulse) override;
 
+<<<<<<< Updated upstream
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
     UCombatComponent* CombatComp;
+=======
+	}
+
+	virtual void  EnableRagdollAndImpulse(const FVector& Impulse) override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	UCombatComponent* CombatComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Projectile")
+	TSubclassOf<AFixedDamageProjectile> ProjectileClass_Player;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
+	void FireProjectile();
+>>>>>>> Stashed changes
 };

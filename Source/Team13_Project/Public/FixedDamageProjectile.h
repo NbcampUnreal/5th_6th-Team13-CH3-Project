@@ -1,5 +1,12 @@
+<<<<<<< Updated upstream
 
 #pragma once
+=======
+// Fill out your copyright notice in the Description page of Project Settings.
+// FixedDamageProjectile.h
+#pragma once
+
+>>>>>>> Stashed changes
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "HitDamageable.h"
@@ -16,6 +23,10 @@ enum class ETeam : uint8
     Monster = 1
 };
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 UCLASS()
 class TEAM13_PROJECT_API AFixedDamageProjectile : public AActor
 {
@@ -30,9 +41,14 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     UProjectileMovementComponent* ProjectileMovement;
 
+<<<<<<< Updated upstream
     // 공통
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
     float Damage = 10.f;
+=======
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+    float Damage = 100.f;
+>>>>>>> Stashed changes
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
     ETeam Team = ETeam::Player;
@@ -43,6 +59,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
     bool bDestroyOnHit = true;
 
+<<<<<<< Updated upstream
     // 이동 모드 스위치
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile|Mode")
     bool bUsePhysics = false; // false: ProjectileMovement, true: Physics
@@ -63,10 +80,17 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Projectile|Mode")
     void SetUsePhysics(bool bInUsePhysics) { bUsePhysics = bInUsePhysics; }
 
+=======
+    
+    UFUNCTION(BlueprintCallable, Category = "Projectile")
+    void SetSourceCombat(UCombatComponent* InCombat) { SourceCombat = InCombat; }
+
+>>>>>>> Stashed changes
 protected:
     virtual void BeginPlay() override;
 
     UFUNCTION()
+<<<<<<< Updated upstream
     void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
         bool bFromSweep, const FHitResult& SweepResult);
@@ -77,6 +101,15 @@ protected:
 
     void ApplyTravelVelocity();  // 모드별 초기 속도/임펄스
     void TryApplyDamageTo(AActor* OtherActor, const FHitResult& Hit);
+=======
+    void OnBeginOverlap(
+        UPrimitiveComponent* OverlappedComponent,
+        AActor* OtherActor,
+        UPrimitiveComponent* OtherComp,
+        int32 OtherBodyIndex,
+        bool bFromSweep,
+        const FHitResult& SweepResult);
+>>>>>>> Stashed changes
 
     bool IsFriendlyToMe(AActor* Other) const;
     UCombatComponent* ResolveCombatComponent() const;

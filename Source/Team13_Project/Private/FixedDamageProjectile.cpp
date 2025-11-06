@@ -2,12 +2,20 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "CombatComponent.h"
+<<<<<<< Updated upstream
 #include "Kismet/GameplayStatics.h"
 
+=======
+#include "HitDamageable.h"
+#include "Kismet/GameplayStatics.h"
+
+
+>>>>>>> Stashed changes
 AFixedDamageProjectile::AFixedDamageProjectile()
 {
     PrimaryActorTick.bCanEverTick = false;
 
+<<<<<<< Updated upstream
     Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
     RootComponent = Collision;
     Collision->InitSphereRadius(10.f);
@@ -26,14 +34,38 @@ AFixedDamageProjectile::AFixedDamageProjectile()
     ProjectileMovement->MaxSpeed = InitialSpeed;
 }
 
+=======
+    
+    Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
+    RootComponent = Collision;
+    Collision->InitSphereRadius(10.f);
+    Collision->SetCollisionProfileName(TEXT("Projectile"));
+    Collision->SetGenerateOverlapEvents(true);
+    Collision->OnComponentBeginOverlap.AddDynamic(this, &AFixedDamageProjectile::OnBeginOverlap);
+
+    
+    ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
+    ProjectileMovement->bRotationFollowsVelocity = true;
+    ProjectileMovement->ProjectileGravityScale = 0.f;
+    ProjectileMovement->InitialSpeed = 2000.f;
+    ProjectileMovement->MaxSpeed = 2000.f;
+}
+
+
+>>>>>>> Stashed changes
 void AFixedDamageProjectile::BeginPlay()
 {
     Super::BeginPlay();
 
+<<<<<<< Updated upstream
+=======
+   
+>>>>>>> Stashed changes
     if (LifeSeconds > 0.f)
         SetLifeSpan(LifeSeconds);
 
     
+<<<<<<< Updated upstream
     if (bUsePhysics)
     {
         
@@ -95,6 +127,17 @@ void AFixedDamageProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 }
 
 void AFixedDamageProjectile::TryApplyDamageTo(AActor* OtherActor, const FHitResult& Hit)
+=======
+    if (ProjectileMovement)
+    {
+        const FVector Forward = GetActorForwardVector();
+        ProjectileMovement->Velocity = Forward * ProjectileMovement->InitialSpeed;
+    }
+}
+
+
+void AFixedDamageProjectile::OnBeginOverlap( UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,int32 OtherBodyIndex, bool bFromSweep,const FHitResult& SweepResult)
+>>>>>>> Stashed changes
 {
     if (!OtherActor || OtherActor == this || OtherActor == GetOwner())
         return;
@@ -113,6 +156,7 @@ void AFixedDamageProjectile::TryApplyDamageTo(AActor* OtherActor, const FHitResu
     Target.SetObject(OtherActor);
     Target.SetInterface(Cast<IHitDamageable>(OtherActor));
 
+<<<<<<< Updated upstream
    
     FVector Dir = FVector::ZeroVector;
     if (bUsePhysics)
@@ -130,24 +174,52 @@ void AFixedDamageProjectile::TryApplyDamageTo(AActor* OtherActor, const FHitResu
 
     AActor* AttackerActor = GetInstigator() ? static_cast<AActor*>(GetInstigator()) : this;
     Combat->ApplyCollisionFeedbackForDefender(Target, AttackerActor, Hit);
+=======
+    const FVector Dir = ProjectileMovement ? ProjectileMovement->Velocity.GetSafeNormal() : GetActorForwardVector();
+    Combat->ApplyFixedDamage(Target, Damage, Dir);
+
+>>>>>>> Stashed changes
     if (bDestroyOnHit)
         Destroy();
 }
 
 bool AFixedDamageProjectile::IsFriendlyToMe(AActor* Other) const
 {
+<<<<<<< Updated upstream
     if (!Other) return false;
     const bool bOtherIsPlayer = Other->ActorHasTag(TEXT("Player"));
     const bool bOtherIsMonster = Other->ActorHasTag(TEXT("Monster"));
     if (Team == ETeam::Player && bOtherIsPlayer)  return true;
     if (Team == ETeam::Monster && bOtherIsMonster) return true;
+=======
+    if (!Other)
+        return false;
+
+    const bool bIsPlayer = Other->ActorHasTag(TEXT("Player"));
+    const bool bIsMonster = Other->ActorHasTag(TEXT("Monster"));
+
+    if (Team == ETeam::Player && bIsPlayer) return true;
+    if (Team == ETeam::Monster && bIsMonster) return true;
+
+>>>>>>> Stashed changes
     return false;
 }
 
 UCombatComponent* AFixedDamageProjectile::ResolveCombatComponent() const
 {
+<<<<<<< Updated upstream
     if (SourceCombat) return SourceCombat;
     if (APawn* InstigatorPawn = GetInstigator())
         return Cast<UCombatComponent>(InstigatorPawn->GetComponentByClass(UCombatComponent::StaticClass()));
     return nullptr;
+=======
+    if (SourceCombat)
+        return SourceCombat;
+
+    APawn* InstigatorPawn = GetInstigator();
+    if (!InstigatorPawn)
+        return nullptr;
+
+    return Cast<UCombatComponent>(InstigatorPawn->GetComponentByClass(UCombatComponent::StaticClass()));
+>>>>>>> Stashed changes
 }

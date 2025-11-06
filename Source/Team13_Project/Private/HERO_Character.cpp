@@ -8,6 +8,11 @@
 
 #include "CombatComponent.h"//충돌 데미지 함수
 
+
+#include "FixedDamageProjectile.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
@@ -146,6 +151,7 @@ void AHERO_Character::BeginPlay()
 		Capsule->OnComponentHit.AddDynamic(this, &AHERO_Character::OnCapsuleHit);
 	}
 
+<<<<<<< Updated upstream
 	// IMC_HERO 매핑 컨텍스트 등록
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
@@ -168,6 +174,9 @@ void AHERO_Character::BeginPlay()
 	{
 		CombatComp->InitializeComponent();
 	}
+=======
+	Tags.AddUnique(FName("Player"));
+>>>>>>> Stashed changes
 }
 
 void AHERO_Character::Tick(float DeltaSeconds)
@@ -252,6 +261,14 @@ void AHERO_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 			}
 
 
+<<<<<<< Updated upstream
+=======
+			if (PlayerController->IA_HERO_Throw)
+			{
+				EI->BindAction(PlayerController->IA_HERO_Throw, ETriggerEvent::Started, this, &AHERO_Character::FireProjectile);
+			}
+
+>>>>>>> Stashed changes
 		}
 		if (IA_HERO_Throw)
 		{
@@ -579,6 +596,7 @@ void AHERO_Character::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* Other,
 		CombatComp->ApplyCollisionFeedbackForDefender(Me, AttackerActor, Hit);
 	}
 }
+<<<<<<< Updated upstream
 
 
 // =========================
@@ -772,30 +790,60 @@ float AHERO_Character::GetExpProgress01() const
 	return FMath::Clamp(EXP / Den, 0.f, 1.f);
 }
 
+=======
+>>>>>>> Stashed changes
 void AHERO_Character::FireProjectile()
 {
 	if (!ProjectileClass_Player) return;
 
+<<<<<<< Updated upstream
+=======
+	
+>>>>>>> Stashed changes
 	const FVector CamLoc = CameraComp ? CameraComp->GetComponentLocation() : GetActorLocation();
 	const FRotator CamRot = CameraComp ? CameraComp->GetComponentRotation() : GetActorRotation();
 	const FVector CamForward = CamRot.Vector();
 
+<<<<<<< Updated upstream
 	const FVector SpawnLoc = CamLoc + CamForward * 100.f; // 카메라 앞 오프셋
 	const FRotator SpawnRot = CamRot;
 
+=======
+	
+	const FVector SpawnLoc = CamLoc + CamForward * 100.f; 
+	const FRotator SpawnRot = CamRot;                      
+
+	
+>>>>>>> Stashed changes
 	FActorSpawnParameters Params;
 	Params.Owner = this;
 	Params.Instigator = this;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
+<<<<<<< Updated upstream
+=======
+	
+>>>>>>> Stashed changes
 	AFixedDamageProjectile* Proj =
 		GetWorld()->SpawnActor<AFixedDamageProjectile>(ProjectileClass_Player, SpawnLoc, SpawnRot, Params);
 	if (!Proj) return;
 
+<<<<<<< Updated upstream
+=======
+	
+>>>>>>> Stashed changes
 	if (CombatComp)
 	{
 		Proj->SetSourceCombat(CombatComp);
 	}
 
 	
+<<<<<<< Updated upstream
+=======
+	if (Proj->ProjectileMovement)
+	{
+		const float Speed = Proj->ProjectileMovement->InitialSpeed;
+		Proj->ProjectileMovement->Velocity = CamForward * Speed;
+	}
+>>>>>>> Stashed changes
 }
