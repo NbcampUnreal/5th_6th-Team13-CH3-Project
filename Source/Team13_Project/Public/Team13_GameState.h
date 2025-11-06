@@ -14,6 +14,7 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void PostInitializeComponents() override;
+	//int32 EnemyToSpawn;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stage")
 	int32 CurrentStageIndex;
