@@ -149,7 +149,12 @@ void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>&
     if (NewHP <= 0.f)
     {
 
-        
+        const float ImpactForKill = Feedback.ImpactMax;
+        const FVector ImpactPoint = DefenderActor ? DefenderActor->GetActorLocation() : FVector::ZeroVector;
+        const FVector Dir = ImpactDirection.GetSafeNormal();
+
+        PlayHitEffects(DefenderActor, ImpactForKill, ImpactPoint, Dir);
+        OnFeedbackPlayed.Broadcast(ImpactForKill, Dir, ImpactPoint);
 
         Defender->OnDead();
         const FVector Impulse = ImpactDirection.GetSafeNormal() * Settings.RagdollImpulseScale * FMath::Max(1.f, Attacker->GetSizeScale());
@@ -171,9 +176,16 @@ void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& 
     
     if (NewHP <= 0.f)
     {
+
+        
+        const float ImpactForKill = Feedback.ImpactMax;
+        const FVector ImpactPoint = TargetActor ? TargetActor->GetActorLocation() : FVector::ZeroVector;
+        const FVector Dir = HitImpulseDir.GetSafeNormal();
+
+        PlayHitEffects(TargetActor, ImpactForKill, ImpactPoint, Dir);
+        OnFeedbackPlayed.Broadcast(ImpactForKill, Dir, ImpactPoint);
+
         Target->OnDead();
-        const FVector Impulse = HitImpulseDir.GetSafeNormal() * Settings.RagdollImpulseScale;
-            
         Target->EnableRagdollAndImpulse(HitImpulseDir.GetSafeNormal() * Settings.RagdollImpulseScale);
     }
 }

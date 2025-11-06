@@ -125,6 +125,8 @@ void AHERO_Character::BeginPlay()
 		Capsule->SetNotifyRigidBodyCollision(true);
 		Capsule->OnComponentHit.AddDynamic(this, &AHERO_Character::OnCapsuleHit);
 	}
+
+
 }
 
 void AHERO_Character::Tick(float DeltaSeconds)
