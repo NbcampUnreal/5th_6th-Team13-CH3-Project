@@ -153,7 +153,10 @@ public:
 
 	// 고정 데미지(돌진/투척)
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,float Damage,const FVector& HitImpulseDir) ;
+
+	void ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,float Damage,const FVector& HitImpulseDir);
+
+	
 
 	// 즉사(특수 원거리, 트랩 등)
 	UFUNCTION(BlueprintCallable, Category = "Combat")
