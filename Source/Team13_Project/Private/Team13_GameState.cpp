@@ -8,6 +8,7 @@
 #include "Blueprint/UserWidget.h"
 #include "ObjectPoolManager.h"
 #include "AiTestMonster.h"
+#include "Team13_GameMode.h"
 
 ATeam13_GameState::ATeam13_GameState()
 {
@@ -62,19 +63,6 @@ void ATeam13_GameState::PostInitializeComponents()
 
 void ATeam13_GameState::StartStage()
 {
-	UE_LOG(LogTemp, Display, TEXT("Starting Stage %d"), CurrentStageIndex);
-
-	FString CurrentMapName = GetWorld()->GetMapName();
-	if (!CurrentMapName.Contains("StartMenu"))
-	{
-		UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
-		if (PoolManager)
-		{
-			PoolManager->InitializePool(AAiTestMonster::StaticClass(), 10);
-		}
-	}
-
-	//HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
@@ -92,6 +80,7 @@ void ATeam13_GameState::StartStage()
 		}
 	}
 
+	FString CurrentMapName = GetWorld()->GetMapName();
 	if (!CurrentMapName.Contains("StartMenu"))
 	{
 		GetWorldTimerManager().SetTimer(
