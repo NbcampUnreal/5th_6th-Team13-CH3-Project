@@ -63,6 +63,10 @@ void ATeam13_GameState::PostInitializeComponents()
 
 void ATeam13_GameState::StartStage()
 {
+	if (ATeam13_GameMode* GameMode = GetWorld()->GetAuthGameMode<ATeam13_GameMode>())
+	{
+		GameMode->StartGameStage();
+	}
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))

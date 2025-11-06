@@ -95,14 +95,15 @@ void ATeam13_GameMode::CompleteGame()
 
 void ATeam13_GameMode::StartGameStage()
 {
-	//UE_LOG(LogTemp, Display, TEXT("Starting Stage %d"), CurrentStageIndex);
+	UE_LOG(LogTemp, Display, TEXT("[Game Mode] Starting Game Stage"));
 	
+	UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
 	FString CurrentMapName = GetWorld()->GetMapName();
 	if (!CurrentMapName.Contains("StartMenu"))
 	{
-		UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
 		if (PoolManager)
 		{
+			UE_LOG(LogTemp, Display, TEXT("[Game Mode] Starting initialize pool"));
 			PoolManager->InitializePool(AAiTestMonster::StaticClass(), 10);
 		}
 	}
