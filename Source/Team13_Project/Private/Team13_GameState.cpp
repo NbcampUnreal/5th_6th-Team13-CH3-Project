@@ -60,6 +60,18 @@ void ATeam13_GameState::PostInitializeComponents()
 
 void ATeam13_GameState::StartStage()
 {
+	UE_LOG(LogTemp, Display, TEXT("Starting Stage %d"), CurrentStageIndex);
+
+	FString CurrentMapName = GetWorld()->GetMapName();
+	if (!CurrentMapName.Contains("StartMenu"))
+	{
+		UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
+		if (PoolManager)
+		{
+			PoolManager->InitializePool(AAiTestMonster::StaticClass(), 10);
+		}
+	}
+
 	//HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
@@ -68,8 +80,8 @@ void ATeam13_GameState::StartStage()
 			Team13_PlayerController->ShowGameHUD();
 		}
 	}
-	
-	if(UGameInstance * GameInstance = GetGameInstance())
+
+	if (UGameInstance* GameInstance = GetGameInstance())
 	{
 		UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(GameInstance);
 		if (Team13_GameInstance)
@@ -78,7 +90,6 @@ void ATeam13_GameState::StartStage()
 		}
 	}
 
-	FString CurrentMapName = GetWorld()->GetMapName();
 	if (!CurrentMapName.Contains("StartMenu"))
 	{
 		GetWorldTimerManager().SetTimer(
