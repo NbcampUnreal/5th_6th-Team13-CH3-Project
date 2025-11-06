@@ -2,9 +2,12 @@
 
 
 #include "Team13_GameMode.h"
+
+#include "AiTestMonster.h"
 #include "Team13_GameState.h"
 #include "Team13_GameInstance.h"
 #include "HERO_Character.h"
+#include "ObjectPoolManager.h"
 #include "Team13_PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -81,5 +84,30 @@ bool ATeam13_GameMode::IsCompleteGame()
 	}*/
 	return false;
 }
+
+void ATeam13_GameMode::CompleteGame()
+{
+	if (IsCompleteGame())
+	{
+		//clear call, ending scene
+	}
+}
+
+void ATeam13_GameMode::StartGameStage()
+{
+	//UE_LOG(LogTemp, Display, TEXT("Starting Stage %d"), CurrentStageIndex);
+	
+	FString CurrentMapName = GetWorld()->GetMapName();
+	if (!CurrentMapName.Contains("StartMenu"))
+	{
+		UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
+		if (PoolManager)
+		{
+			PoolManager->InitializePool(AAiTestMonster::StaticClass(), 10);
+		}
+	}
+}
+
+
 
 
