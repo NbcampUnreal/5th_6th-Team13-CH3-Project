@@ -15,7 +15,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
 	int32 CurrentStageIndex;
 
-	//юс╫ц
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
 	int32 CurrentKill;
 
