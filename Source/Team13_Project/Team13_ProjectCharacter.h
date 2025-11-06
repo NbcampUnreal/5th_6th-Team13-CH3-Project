@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
-#include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Team13_ProjectCharacter.generated.h"
 
 class USpringArmComponent;
@@ -50,11 +49,6 @@ public:
 	
 
 protected:
-	virtual void BeginPlay() override;
-	
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
-	UAIPerceptionStimuliSourceComponent* StimuliSource;
 
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);

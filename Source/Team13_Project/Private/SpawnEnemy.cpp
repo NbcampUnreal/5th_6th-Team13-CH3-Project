@@ -1,37 +1,36 @@
-ï»¿#include "SpawnEnemy.h"
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "SpawnEnemy.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Engine/World.h"
-#include "ObjectPoolManager.h"
-#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Actor.h"
 
+//ASpawnEnemy -> 
 ASpawnEnemy::ASpawnEnemy()
 {
+ 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
 	SetRootComponent(Scene);
 
+	//SpawningBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawningBox"));
+	//SpawningBox->SetupAttachment(Scene);
+
+	//Circle Spawning Range
 	SpawningSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SpawningSphere"));
 	SpawningSphere->SetupAttachment(Scene);
 
 	EnemyDataTable = nullptr;
-
-	EnemyToSpawn = 5;
-
-	EnemySpawned = 0;
-
-	EnemyAlive = 0;
-
-	bCanSpawn = true;
 }
 
-void ASpawnEnemy::BeginPlay()
-{
-	Super::BeginPlay();
-
-	// Overlap ì´ë²¤íŠ¸ ë°”ì¸ë”©
-	SpawningSphere->OnComponentBeginOverlap.AddDynamic(this, &ASpawnEnemy::OnOverlapBegin);
-}
+//// Called when the game starts or when spawned
+//void ASpawnEnemy::BeginPlay()
+//{
+//	Super::BeginPlay();
+//	
+//}
 
 FEnemySpawnRow* ASpawnEnemy::GetRandomEnemy() const
 {
@@ -67,92 +66,62 @@ FEnemySpawnRow* ASpawnEnemy::GetRandomEnemy() const
 	return nullptr;
 }
 
-FVector ASpawnEnemy::GetRandomPointInVolume_Sphere() const
-{
-	FVector Origin = SpawningSphere->GetComponentLocation();
-	float Radius = SpawningSphere->GetScaledSphereRadius();
-
-	FVector2D RandomPoint = FMath::RandPointInCircle(Radius);
-	return FVector(Origin.X + RandomPoint.X, Origin.Y + RandomPoint.Y, Origin.Z);
-}
-
-//Overlapí•  ê²½ìš° ì  ìƒì„±
-void ASpawnEnemy::OnOverlapBegin(
-	UPrimitiveComponent* OverlappedComp,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex,
-	bool bFromSweep,
-	const FHitResult& SweepResult)
-{
-	if (!bCanSpawn) return; // 10ì´ˆ ì œí•œ ì¤‘ì—ëŠ” ì‘ë™í•˜ì§€ ëª»í•˜ê²Œ í•¨
-
-	bCanSpawn = false; // í•œ ë²ˆ ìŠ¤í° í›„ ë¹„í™œì„±í™” -> ì´ìœ  : Overlapì´ ê³„ì† ë°˜ë³µë¨
-
-	// ì—¬ê¸°ì„œ ë°”ë¡œ ì  ìƒì„±
-	for (int32 i = 0; i < EnemyToSpawn; i++)
-	{
-		AActor* SpawnedActor = SpawnRandomEnemy();
-		if (SpawnedActor)
-		{
-			EnemySpawned++;
-			EnemyAlive++;
-		}
-	}
-
-	//10ì´ˆ í›„ ë‹¤ì‹œ í™œì„±í™”
-	GetWorld()->GetTimerManager().SetTimer(
-		SpawnCooldownTimerHandle,
-		this,
-		&ASpawnEnemy::ResetSpawnState,
-		10.0f, 
-		false  
-	);
-}
-
-void ASpawnEnemy::ResetSpawnState()
-{
-	bCanSpawn = true;
-}
-
-//Object Poolì„ ì‚¬ìš©í•œ Spawn
 AActor* ASpawnEnemy::SpawnEnemy(TSubclassOf<AActor> EnemyClass)
 {
 	if (!EnemyClass) return nullptr;
 
-	UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
-	if (!PoolManager)
-	{
-		UE_LOG(LogTemp, Error, TEXT("ObjectPoolManager not found!"));
-		return nullptr;
-	}
-
-	FVector SpawnLocation = GetRandomPointInVolume_Sphere();
-	FRotator SpawnRotation = FRotator::ZeroRotator;
-
-	AActor* SpawnedActor = nullptr;
-	PoolManager->SpawnFromPool(EnemyClass, SpawnLocation, SpawnRotation, SpawnedActor);
-
+	AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(
+		EnemyClass,
+		GetRandomPointInVolume_Sphere(),
+		FRotator::ZeroRotator
+	);
 	if (SpawnedActor)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Spawned from pool: %s"), *SpawnedActor->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("Spawned: %s"), *SpawnedActor->GetName());
 	}
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("Spawn FAILED for %s"), *EnemyClass->GetName());
 	}
-
 	return SpawnedActor;
 }
+/*
+FVector ASpawnEnemy::GetRandomPointInVolume() const
+{
+	FVector BoxExtent = SpawningBox->GetScaledBoxExtent();
+	//Áß½ÉÁÂÇ¥
+	FVector BoxOrigin = SpawningBox->GetComponentLocation();
 
-// ëœë¤ ì  í’€ì—ì„œ Spawn
+	//·£´ıÇÑ ÁÂÇ¥°ªÀ» µé°í¿È
+	return BoxOrigin + FVector(
+		FMath::FRandRange(-BoxExtent.X, BoxExtent.X),
+		FMath::FRandRange(-BoxExtent.Y, BoxExtent.Y),
+		FMath::FRandRange(-BoxExtent.Z, BoxExtent.Z)
+	);
+}
+*/
+
+FVector ASpawnEnemy::GetRandomPointInVolume_Sphere() const
+{
+	FVector Origin = SpawningSphere->GetComponentLocation();
+	float Radius = SpawningSphere->GetScaledSphereRadius();
+
+	// XY Æò¸éÀÇ ¿ø ³»ºÎ¿¡¼­ ·£´ı Á¡ »ı¼º
+	FVector2D RandomPoint = FMath::RandPointInCircle(Radius);
+
+	// Z´Â °íÁ¤ (¹Ù´Ú¸é)
+	return FVector(Origin.X + RandomPoint.X, Origin.Y + RandomPoint.Y, Origin.Z);
+}
+
+
 AActor* ASpawnEnemy::SpawnRandomEnemy()
 {
 	if (FEnemySpawnRow* SelectedRow = GetRandomEnemy())
 	{
-		if (TSubclassOf<AActor> EnemyClass = SelectedRow->EnemyClass)
+		//TSubclass
+		if (UClass* ActualClass = SelectedRow->EnemyClass.Get())
 		{
-			return SpawnEnemy(EnemyClass);
+			return SpawnEnemy(ActualClass);
 		}
 	}
 	return nullptr;
