@@ -1,6 +1,7 @@
 #include "Team13_PlayerController.h"
 #include "Team13_GameInstance.h"
 #include "Team13_GameState.h"
+#include "Team13_GameMode.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextBlock.h"

@@ -20,6 +20,6 @@ public:
 	void PlayerLevelUp();
 	bool IsCompleteGame();
 	void CompleteGame();
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void StartGameStage();
 };
