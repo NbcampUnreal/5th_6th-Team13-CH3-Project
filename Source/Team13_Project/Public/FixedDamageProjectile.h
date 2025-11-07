@@ -87,7 +87,7 @@ protected:
         UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
     void ApplyTravelVelocity();  // 모드별 초기 속도/임펄스
-    
+    void TryApplyDamageTo(AActor* OtherActor, const FHitResult& Hit);
 
     bool IsFriendlyToMe(AActor* Other) const;
     UCombatComponent* ResolveCombatComponent() const;

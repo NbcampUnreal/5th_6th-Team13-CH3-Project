@@ -178,7 +178,8 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
     float DashTimer;
 
-    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill")
+    float DashCooldown;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
     float DashCooldownRemaining;
@@ -299,40 +300,4 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
     UCombatComponent* CombatComp;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Fire")
-    float FireCooldown = 0.3f; // 0.3초마다 발사 가능 (초당 약 3.3발)
-
-    // 내부 타이머
-    FTimerHandle FireCooldownTimer;
-
-    // 쿨타임 중인지 여부
-    bool bCanFire = true;
-
-   
-
-    // 쿨타임 리셋
-    void ResetFire();
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Cooldown")
-    bool bCanDash = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill|Cooldown")
-    float DashCooldown = 10.0f;
-
-    FTimerHandle DashCooldownTimer;
-    void ResetDash(); // 대시 쿨타임 해제
-
-    // 메테오도 동일 패턴
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Cooldown")
-    bool bCanMeteor = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill|Cooldown")
-    float MeteorCooldown = 8.0f;
-
-    FTimerHandle MeteorCooldownTimer;
-    void ResetMeteor(); // 메테오 쿨타임 해제
-
-
-
 };

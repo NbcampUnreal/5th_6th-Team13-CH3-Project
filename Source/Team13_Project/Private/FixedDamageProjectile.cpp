@@ -123,7 +123,10 @@ void AFixedDamageProjectile::OnBeginOverlap( UPrimitiveComponent* OverlappedComp
     Target.SetInterface(Cast<IHitDamageable>(OtherActor));
 
     // 가해 방향 계산
-    const FVector Dir = bUsePhysics  ? (Collision->GetComponentVelocity().GetSafeNormal().IsNearlyZero() ? GetActorForwardVector()  : Collision->GetComponentVelocity().GetSafeNormal())
+    const FVector Dir = bUsePhysics
+        ? (Collision->GetComponentVelocity().GetSafeNormal().IsNearlyZero()
+            ? GetActorForwardVector()
+            : Collision->GetComponentVelocity().GetSafeNormal())
         : (ProjectileMovement
             ? ProjectileMovement->Velocity.GetSafeNormal()
             : GetActorForwardVector());
