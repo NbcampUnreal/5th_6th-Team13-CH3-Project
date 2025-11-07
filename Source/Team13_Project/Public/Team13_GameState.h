@@ -30,6 +30,8 @@ public:
 
 	void StartStage();
 	void EndStage();
+
+	
 	UFUNCTION()
 	void OnGameOver();
 	void UpdateHUD();
