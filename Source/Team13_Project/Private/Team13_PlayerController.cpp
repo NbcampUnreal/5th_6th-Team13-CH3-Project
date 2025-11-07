@@ -156,7 +156,7 @@ void ATeam13_PlayerController::ShowEndMenu(bool bIsReStart)
 		{
 			if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
 			{
-				TotalKillText->SetText(FText::FromString(FString::Printf(TEXT("Kill : %d"), GameInstance->CurrentKill)));
+				TotalKillText->SetText(FText::FromString(FString::Printf(TEXT("Kill\n%d"), GameInstance->CurrentKill)));
 			}
 		}
 
@@ -165,7 +165,7 @@ void ATeam13_PlayerController::ShowEndMenu(bool bIsReStart)
 		{
 			if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
 			{
-				TotalScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score : %d"), GameInstance->Score)));
+				TotalScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score\n%d"), GameInstance->Score)));
 			}
 		}
 
@@ -179,7 +179,7 @@ void ATeam13_PlayerController::ShowEndMenu(bool bIsReStart)
 					//·¹º§ text
 					if (UTextBlock* TotalLevelText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("LevelText")))
 					{
-						TotalLevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level)));
+						TotalLevelText->SetText(FText::FromString(FString::Printf(TEXT("Level\n%d"), HeroCharacter->Level)));
 					}
 				}
 			}
