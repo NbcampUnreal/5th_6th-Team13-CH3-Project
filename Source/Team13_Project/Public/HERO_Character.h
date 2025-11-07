@@ -266,9 +266,7 @@ public:
     // 크기 동기화 함수 - CSM
     void SyncSizeToScale();
 
-    /* ===========================
-     *  HitDamageable 인터페이스 구현부 (헤더 선언)
-     * =========================== */
+    // HitDamageable 인터페이스 구현부 (헤더 선언)
     virtual float GetCurrentHealth() const override { return HP; }
     virtual float GetMaxHealth() const override { return MaxHP; }
     virtual void  SetCurrentHealth(float NewValue) override;

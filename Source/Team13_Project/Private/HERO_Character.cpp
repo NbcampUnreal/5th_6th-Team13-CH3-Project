@@ -87,7 +87,7 @@ AHERO_Character::AHERO_Character()
 
 	CombatComp = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComp"));
 
-	// ----- 여기부터 추가: 메테오 스킬 초기화 및 커서 데칼 생성 -----
+	//메테오 스킬 스텟 초기화/ 커서 데칼 생성
 	MeteorState = EMeteorState::None;
 	MeteorTargetHeight = 1200.f;
 	MeteorAscendSpeed = 1800.f;
@@ -102,7 +102,6 @@ AHERO_Character::AHERO_Character()
 	MeteorCursorDecal->SetupAttachment(GetRootComponent());
 	MeteorCursorDecal->SetHiddenInGame(true);
 	MeteorCursorDecal->DecalSize = FVector(256.f, 128.f, 128.f);
-	// ------------------------------------------------------------------
 }
 
 void AHERO_Character::BeginPlay()
@@ -118,7 +117,7 @@ void AHERO_Character::BeginPlay()
 		CURRENT_V = MAX_V;
 	}
 
-	// CharacterMovement의 이동속도(MaxWalkSpeed)에 우리 CURRENT_V 반영
+	// CharacterMovement의 이동속도(MaxWalkSpeed)에 CURRENT_V 반영
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
 		MoveComp->MaxWalkSpeed = CURRENT_V;
@@ -160,7 +159,6 @@ void AHERO_Character::BeginPlay()
 			}
 		}
 	}
-	// -----------------------------------------------------------------------------------
 }
 
 void AHERO_Character::Tick(float DeltaSeconds)
@@ -170,19 +168,17 @@ void AHERO_Character::Tick(float DeltaSeconds)
 	// 시간 경과 처리 (쿨다운, 대쉬 타이머 등)
 	HandleCooldowns(DeltaSeconds);
 
-	// -----  메테오 상승/조준 틱 우선 처리 -----
+	// 메테오 상승/조준 틱 우선 처리
 	if (MeteorState == EMeteorState::Ascending || MeteorState == EMeteorState::Aiming)
 	{
 		TickMeteor(DeltaSeconds);
 
-		// 원본 흐름에서 이동 처리와 속도 반영을 건너뛰면 이동속도 반영이 누락될 수 있으니 여기서 보정
 		if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 		{
 			MoveComp->MaxWalkSpeed = CURRENT_V;
 		}
 		return;
 	}
-	// -------------------------------------------------------------------------------
 
 	// 이동 처리: 상태에 따라 다르게
 	if (CurrentSkillState == ESkillState::Dashing)
@@ -205,59 +201,38 @@ void AHERO_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	// Enhanced Input으로 바인딩
 	if (UEnhancedInputComponent* EI = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		if (ATeam13_PlayerController* PlayerController = Cast<ATeam13_PlayerController>(GetController()))
+		// Look
+		if (IA_HERO_Look)
 		{
-			// 시야 회전
-			if (PlayerController->IA_HERO_Look)
-			{
-				EI->BindAction(PlayerController->IA_HERO_Look, ETriggerEvent::Triggered, this, &AHERO_Character::Input_Look);
-
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("Look X"));
-			}
-
-			// 가속/감속
-			if (PlayerController->IA_HERO_Accelerate)
-			{
-				// 누르는 동안 Triggered (true 유지)
-				EI->BindAction(PlayerController->IA_HERO_Accelerate, ETriggerEvent::Triggered, this, &AHERO_Character::Input_Accelerate);
-				// 뗄 때 Completed (false 전달)
-				EI->BindAction(PlayerController->IA_HERO_Accelerate, ETriggerEvent::Completed, this, &AHERO_Character::Input_Accelerate);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("Accelerate X"));
-			}
-
-			// 대쉬 스킬
-			if (PlayerController->IA_HERO_DashSkill)
-			{
-				EI->BindAction(PlayerController->IA_HERO_DashSkill, ETriggerEvent::Started, this, &AHERO_Character::Input_DashSkill);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("Dash X"));
-			}
+			EI->BindAction(IA_HERO_Look, ETriggerEvent::Triggered, this, &AHERO_Character::Input_Look);
 		}
 
-		// IA_HERO_MeteorStrike 바인딩
+		// Accelerate
+		if (IA_HERO_Accelerate)
+		{
+			EI->BindAction(IA_HERO_Accelerate, ETriggerEvent::Triggered, this, &AHERO_Character::Input_Accelerate);
+			EI->BindAction(IA_HERO_Accelerate, ETriggerEvent::Completed, this, &AHERO_Character::Input_Accelerate);
+		}
+
+		// Dash(스킬1) - 캐릭터 소유 액션으로 바인딩
+		if (IA_HERO_DashSkill)
+		{
+			EI->BindAction(IA_HERO_DashSkill, ETriggerEvent::Started, this, &AHERO_Character::Input_DashSkill);
+		}
+
+		// Meteor(스킬2)
 		if (IA_HERO_MeteorStrike)
 		{
 			EI->BindAction(IA_HERO_MeteorStrike, ETriggerEvent::Started, this, &AHERO_Character::Input_MeteorStrike);
 		}
-		// -----------------------------------------------------------------------------------------
 	}
 }
 
 
-/* -------------------------------------------------
- * 내부 처리: 시간 경과 (쿨다운, 대쉬 타이머 등)
- * ------------------------------------------------- */
+// 내부 처리: 시간 경과 (쿨다운, 대쉬 타이머 등)
+
 void AHERO_Character::HandleCooldowns(float DeltaSeconds)
 {
 	// 대쉬 쿨다운 남은 시간 줄이기
@@ -284,9 +259,7 @@ void AHERO_Character::HandleCooldowns(float DeltaSeconds)
 }
 
 
-/* -------------------------------------------------
- * 내부 처리: Dashing 이동
- * ------------------------------------------------- */
+// Dashing 이동
 void AHERO_Character::HandleDash(float /*DeltaSeconds*/)
 {
 	// 돌진 중에는 무조건 최고속도 유지
@@ -298,9 +271,8 @@ void AHERO_Character::HandleDash(float /*DeltaSeconds*/)
 }
 
 
-/* -------------------------------------------------
- * 내부 처리: 일반 이동(가속/감속)
- * ------------------------------------------------- */
+// 내부 처리: 일반 이동(가속/감속)
+ 
 void AHERO_Character::HandleMovement(float DeltaSeconds)
 {
 	if (bIsAccelerating)
@@ -333,9 +305,8 @@ void AHERO_Character::HandleMovement(float DeltaSeconds)
 }
 
 
-/* -------------------------------------------------
- * 레벨 기반 스탯 재계산
- * ------------------------------------------------- */
+//레벨 기반 스탯 재계산
+
 void AHERO_Character::ApplyLevelStats()
 {
 	// MAX_V = BASE_MAX_V + (Level - 1) * INC_MAX_V_PER_LVL
@@ -348,9 +319,7 @@ void AHERO_Character::ApplyLevelStats()
 }
 
 
-/* -------------------------------------------------
- * 내부 레벨업 처리
- * ------------------------------------------------- */
+// 내부 레벨업 처리
 void AHERO_Character::LevelUpInternal()
 {
 	// (알림용) 이전의 레벨/HP 백업
@@ -363,8 +332,7 @@ void AHERO_Character::LevelUpInternal()
 	// 이동/가속 스탯 다시 계산
 	ApplyLevelStats();
 
-	// HP 최대치 증가 규칙이 있다면 여기서 MaxHP 갱신 후 풀회복하세요.
-	// 현재 버전에선 MaxHP 고정 → HP만 MaxHP로 회복
+	// MaxHP 고정 → HP만 MaxHP로 회복
 	HP = MaxHP;
 
 	// 현재 속도가 새 MAX_V를 넘지 않게
@@ -423,18 +391,15 @@ void AHERO_Character::Heal(float HealAmount)
 }
 
 
-/* -------------------------------------------------
- * 레벨업 공개 함수 (블루프린트 등에서 호출)
- * ------------------------------------------------- */
+// 레벨업 공개 함수 (블루프린트 등에서 호출)/
 void AHERO_Character::ForceLevelUp()
 {
 	LevelUpInternal();
 }
 
 
-/* -------------------------------------------------
- * 입력 콜백
- * ------------------------------------------------- */
+// 입력 콜백
+
 
  // 가속/감속 토글 (IA_HERO_Accelerate → bool)
 void AHERO_Character::Input_Accelerate(const FInputActionValue& Value)
@@ -459,26 +424,19 @@ void AHERO_Character::Input_Look(const FInputActionValue& Value)
 // 대쉬 스킬 (IA_HERO_DashSkill)
 void AHERO_Character::Input_DashSkill(const FInputActionValue& /*Value*/)
 {
-	// Normal 상태에서 쿨다운이 0이면 조준 상태로 진입
-	if (CurrentSkillState == ESkillState::Normal && DashCooldownRemaining <= 0.0f)
-	{
-		CurrentSkillState = ESkillState::AimingDash;
-		return;
-	}
+    // 메테오 도중에는 대쉬 금지
+    if (MeteorState != EMeteorState::None)
+        return;
 
-	// 조준 상태에서 다시 누르면 실제 돌진 시작
-	if (CurrentSkillState == ESkillState::AimingDash)
-	{
-		CurrentSkillState = ESkillState::Dashing;
-		DashTimer = DashDuration;
-		DashCooldownRemaining = DashCooldown;
+    // 쿨다운 체크
+    if (DashCooldownRemaining > 0.0f)
+        return;
 
-		// 돌진 시작 즉시 최고속도까지 끌어올림
-		CURRENT_V = MAX_V;
-		return;
-	}
-
-	// 이미 Dashing이면 무시
+    // 즉발 대쉬
+    CurrentSkillState = ESkillState::Dashing;
+    DashTimer = DashDuration;
+    DashCooldownRemaining = DashCooldown;
+    CURRENT_V = MAX_V;
 }
 
 void AHERO_Character::SyncSizeToScale() // 크기 증가 함수 - CSM
@@ -569,10 +527,7 @@ void AHERO_Character::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* Other,
 }
 
 
-// =========================
 // 추가: 메테오 스킬 구현부
-// =========================
-
 void AHERO_Character::Input_MeteorStrike(const FInputActionValue& /*Value*/)
 {
 	if (MeteorState == EMeteorState::Descending)
@@ -599,8 +554,10 @@ void AHERO_Character::BeginMeteorAscend()
 		MeteorTargetZ = MeteorStartZ + MeteorTargetHeight;
 
 		MeteorSavedGravityScale = Move->GravityScale;
-		Move->GravityScale = 0.f;
+
 		Move->StopMovementImmediately();
+		Move->GravityScale = 0.f;
+		Move->SetMovementMode(MOVE_Flying);   // 떨림 방지, 중력적용제거
 		Move->Velocity = FVector::ZeroVector;
 	}
 
@@ -612,32 +569,35 @@ void AHERO_Character::BeginMeteorAscend()
 
 void AHERO_Character::TickMeteor(float DeltaSeconds)
 {
-	if (MeteorState == EMeteorState::Ascending)
-	{
-		FVector P = GetActorLocation();
-		P.Z += MeteorAscendSpeed * DeltaSeconds;
+    if (MeteorState == EMeteorState::Ascending)
+    {
+        FVector P = GetActorLocation();
+        P.Z += MeteorAscendSpeed * DeltaSeconds;
 
-		if (P.Z >= MeteorTargetZ)
-		{
-			P.Z = MeteorTargetZ;
-			SetActorLocation(P);
-			BeginMeteorAiming();
-		}
-		else
-		{
-			SetActorLocation(P);
-		}
-		return;
-	}
+        if (P.Z >= MeteorTargetZ)
+        {
+            P.Z = MeteorTargetZ;
+            SetActorLocation(P, false, nullptr, ETeleportType::TeleportPhysics);
+            BeginMeteorAiming();
+        }
+        else
+        {
+            SetActorLocation(P, false, nullptr, ETeleportType::TeleportPhysics);
+        }
+        return;
+    }
 
-	if (MeteorState == EMeteorState::Aiming)
-	{
-		FVector P = GetActorLocation();
-		P.Z = MeteorTargetZ;
-		SetActorLocation(P);
+    if (MeteorState == EMeteorState::Aiming)
+    {
+        FVector P = GetActorLocation();
+        if (!FMath::IsNearlyEqual(P.Z, MeteorTargetZ, 1.f))
+        {
+            P.Z = MeteorTargetZ;
+            SetActorLocation(P, false, nullptr, ETeleportType::TeleportPhysics);
+        }
 
-		UpdateMeteorCursor();
-	}
+        UpdateMeteorCursor();
+    }
 }
 
 void AHERO_Character::BeginMeteorAiming()
@@ -648,6 +608,7 @@ void AHERO_Character::BeginMeteorAiming()
 	{
 		Move->GravityScale = 0.f;
 		Move->StopMovementImmediately();
+		Move->SetMovementMode(MOVE_Flying);   // 공중 대기 유지,중력제거
 		Move->Velocity = FVector::ZeroVector;
 	}
 
@@ -700,7 +661,7 @@ void AHERO_Character::CommitMeteorStrike()
 	}
 	Target.Z = MeteorTargetZ;
 
-	SetActorLocation(Target, false);
+	SetActorLocation(Target, false, nullptr, ETeleportType::TeleportPhysics);
 
 	if (MeteorCursorDecal)
 		MeteorCursorDecal->SetHiddenInGame(true);
@@ -710,6 +671,7 @@ void AHERO_Character::CommitMeteorStrike()
 	if (UCharacterMovementComponent* Move = GetCharacterMovement())
 	{
 		Move->GravityScale = MeteorSavedGravityScale;
+		Move->SetMovementMode(MOVE_Falling);          // 낙하 시작
 		Move->Velocity = FVector(0.f, 0.f, -MeteorFallSpeed);
 	}
 }
@@ -724,6 +686,12 @@ void AHERO_Character::Landed(const FHitResult& Hit)
 
 		if (MeteorCursorDecal)
 			MeteorCursorDecal->SetHiddenInGame(true);
+
+		if (UCharacterMovementComponent* Move = GetCharacterMovement())
+		{
+			Move->SetMovementMode(MOVE_Walking);      // 안전 복귀
+			Move->GravityScale = MeteorSavedGravityScale;
+		}
 
 		if (MeteorAOESphereClass)
 		{
