@@ -8,10 +8,11 @@
 #include "Blueprint/UserWidget.h"
 #include "ObjectPoolManager.h"
 #include "AiTestMonster.h"
+#include "Team13_GameMode.h"
 
 ATeam13_GameState::ATeam13_GameState()
 {
-	StageDuration = 1000.f;
+	StageDuration = 100.f;
 	CurrentStageIndex = 0;
 	MaxStageIndex = 2;
 }
@@ -20,7 +21,25 @@ void ATeam13_GameState::BeginPlay()
 {
 	Super::BeginPlay();
 
+	/*TArray<AActor*> FoundVolumes;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnEnemy::StaticClass(), FoundVolumes);
 
+	int32 BaseSpawnCount = 40;
+	float SpawnIncreaseRate = 0.2f;
+
+	EnemyToSpawn = BaseSpawnCount + (BaseSpawnCount * SpawnIncreaseRate);
+
+	for (int32 i = 0; i < BaseSpawnCount; i++)
+	{
+		if (FoundVolumes.Num() > 0)
+		{
+			ASpawnEnemy* SpawnEnemy = Cast<ASpawnEnemy>(FoundVolumes[0]);
+			if (SpawnEnemy)
+			{
+				AActor* SpawnedActor = SpawnEnemy->SpawnRandomEnemy();
+			}
+		}
+	}*/
 	StartStage();
 
 	HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -44,7 +63,10 @@ void ATeam13_GameState::PostInitializeComponents()
 
 void ATeam13_GameState::StartStage()
 {
-	//HERO_Character = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (ATeam13_GameMode* GameMode = GetWorld()->GetAuthGameMode<ATeam13_GameMode>())
+	{
+		GameMode->StartGameStage();
+	}
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
@@ -52,8 +74,8 @@ void ATeam13_GameState::StartStage()
 			Team13_PlayerController->ShowGameHUD();
 		}
 	}
-	
-	if(UGameInstance * GameInstance = GetGameInstance())
+
+	if (UGameInstance* GameInstance = GetGameInstance())
 	{
 		UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(GameInstance);
 		if (Team13_GameInstance)
@@ -118,8 +140,7 @@ void ATeam13_GameState::OnGameOver()
 		if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
 		{
 			Team13_PlayerController->SetPause(true);
-			//Team13_PlayerController->ShowEndMenu(true); //임시
-			/*if (HERO_Character->IsDead() ||
+			if (HERO_Character->IsDead() ||
 				(StageDuration < 0 && HERO_Character->GetHeroLevel() < 5))
 			{
 				Team13_PlayerController->ShowEndMenu(true);
@@ -127,17 +148,7 @@ void ATeam13_GameState::OnGameOver()
 			else 
 			{
 				Team13_PlayerController->ShowEndMenu(false);
-			}*/
-			if (HERO_Character->IsDead())
-			{
-				UE_LOG(LogTemp, Error, TEXT("Death"));
-				Team13_PlayerController->ShowEndMenu(true);
 			}
-			else 
-			{
-				UE_LOG(LogTemp, Error, TEXT("Failed Death"));
-			}
-
 		}
 	}
 }
@@ -163,15 +174,21 @@ void ATeam13_GameState::UpdateHUD()
 						}
 
 						//Exp Text
-						if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("ExpText"))))
+						/*if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("ExpText"))))
 						{
-							ExpText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), Team13_GameInstance->CurrentExp, Team13_GameInstance->MaxExp)));
-						}
+							ExpText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), 캐릭터 현재 경험치, 최대경험치)));
+						}*/
 						
 						//Stage Text
 						if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("StageText"))))
 						{
 							ExpText->SetText(FText::FromString(FString::Printf(TEXT("Stagt : %d"), CurrentStageIndex + 1)));
+						}
+						
+						//Kill Text
+						if (UTextBlock* KillText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("KillText"))))
+						{
+							KillText->SetText(FText::FromString(FString::Printf(TEXT("%d"), Team13_GameInstance->CurrentKill)));
 						}
 					}
 					ACharacter* Character = PlayerController->GetCharacter();
@@ -195,6 +212,12 @@ void ATeam13_GameState::UpdateHUD()
 							if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("LevelText"))))
 							{
 								LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level)));
+							}
+
+							//EXP text
+							if (UTextBlock* EXPText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName("ExpText")))
+							{
+								EXPText->SetText(FText::FromString(FString::Printf(TEXT("%0.f / %0.f"), HeroCharacter->EXP, HeroCharacter->MAX_EXP)));
 							}
 						}
 					}

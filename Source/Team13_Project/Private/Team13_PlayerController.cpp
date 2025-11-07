@@ -1,6 +1,7 @@
 #include "Team13_PlayerController.h"
 #include "Team13_GameInstance.h"
 #include "Team13_GameState.h"
+#include "Team13_GameMode.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextBlock.h"
@@ -13,6 +14,7 @@ ATeam13_PlayerController::ATeam13_PlayerController()
 	IA_HERO_Look(nullptr),
 	IA_HERO_Accelerate(nullptr),
 	IA_HERO_DashSkill(nullptr),
+	IA_HERO_MeteorStrike(nullptr),
 	HUDWidgetClass(nullptr),
 	HUDWidgetInstance(nullptr),
 	MainMenuWidgetClass(nullptr),
@@ -149,21 +151,37 @@ void ATeam13_PlayerController::ShowEndMenu(bool bIsReStart)
 			ResultText->SetText(FText::FromString(bIsReStart ? TEXT("Loser") : TEXT("Winner")));
 		}
 
-		//레벨 text
-		if (UTextBlock* TotalLevelText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("LevelText")))
-		{
-			if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
-			{
-				TotalLevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), GameInstance->CurrentLevel)));
-			}
-		}
-
 		//킬 text
 		if (UTextBlock* TotalKillText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("KillText")))
 		{
 			if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
 			{
 				TotalKillText->SetText(FText::FromString(FString::Printf(TEXT("Kill : %d"), GameInstance->CurrentKill)));
+			}
+		}
+
+		//스코어 text (누적 경험치)
+		if (UTextBlock* TotalScoreText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("ScoreText")))
+		{
+			if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
+			{
+				TotalScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score : %d"), GameInstance->Score)));
+			}
+		}
+
+		if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+		{
+			if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
+			{
+				ACharacter* player = PlayerController->GetCharacter();
+				if (AHERO_Character* HeroCharacter = Cast<AHERO_Character>(player))
+				{
+					//레벨 text
+					if (UTextBlock* TotalLevelText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("LevelText")))
+					{
+						TotalLevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level)));
+					}
+				}
 			}
 		}
 	}
@@ -213,18 +231,6 @@ void ATeam13_PlayerController::ShowGameHUD()
 			}
 		}
 	}
-
-	//if (MainMenuWidgetClass)
-	//{
-	//	MainMenuWidgetInstance = CreateWidget<UUserWidget>(this, MainMenuWidgetClass);
-	//	if (MainMenuWidgetInstance)
-	//	{
-	//		MainMenuWidgetInstance->AddToViewport();
-	//		//마우스 커서 UI
-	//		bShowMouseCursor = true;
-	//		SetInputMode(FInputModeUIOnly());
-	//	}
-	//}
 }
 
 //게임시작

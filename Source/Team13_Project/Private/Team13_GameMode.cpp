@@ -2,38 +2,124 @@
 
 
 #include "Team13_GameMode.h"
-#include "Team13_GameState.h"
-#include "Team13_PlayerController.h"
-#include "ObjectPoolManager.h"
-#include "Team13_GameInstance.h"
+
 #include "AiTestMonster.h"
+#include "Team13_GameState.h"
+#include "Team13_GameInstance.h"
+#include "HERO_Character.h"
+#include "ObjectPoolManager.h"
+#include "Team13_PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 
 ATeam13_GameMode::ATeam13_GameMode()
 {
 	GameStateClass = ATeam13_GameState::StaticClass();
 	PlayerControllerClass = ATeam13_PlayerController::StaticClass();
+	
 }
 
-void ATeam13_GameMode::BeginPlay()
+void ATeam13_GameMode::MonsterKilled(ABaseMonsterCharacter* KilledMonster, int32 exp)
 {
-	Super::BeginPlay();
-
-	// ¿ùµå°¡ ¿ÏÀüÈ÷ ÁØºñµÈ ½ÃÁ¡¿¡¼­ Subsystem Á¢±Ù °¡´É
-	if (UGameInstance* GameInstance = GetGameInstance())
+	if (KilledMonster)
 	{
-		UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(GameInstance);
-		if (Team13_GameInstance->CurrentStageIndex > 0 && Team13_GameInstance->CurrentStageIndex < 3)
+		UTeam13_GameInstance* GameInstance = GetGameInstance<UTeam13_GameInstance>();
+		if (GameInstance)
 		{
-			UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
-			if (PoolManager)
+			GameInstance->AddToKill();
+			GameInstance->AddScore(exp);
+		}
+		AHERO_Character* player = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		if (player)
+		{
+			//í”Œë ˆì´ì–´ ê²½í—˜ì¹˜ ì¦ê°€ í•¨ìˆ˜
+			player->AddExp(exp);
+			UE_LOG(LogTemp, Display, TEXT("[Game Mode] Player exp: %f"),player->EXP);
+		}
+	}
+	
+}
+
+void ATeam13_GameMode::PlayerLevelUp()
+{
+	AHERO_Character* player = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (!player)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[GameMode]PlayerLevelUp: Player nullptr"));
+		return;
+	}
+	UTeam13_GameInstance* GameInstance = GetGameInstance<UTeam13_GameInstance>();
+	if (!GameInstance)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[GameMode]PlayerLevelUp: GameInstance nullptr"));
+		return;
+	}
+
+	//game complete check
+	/*if (player->GetLevel() >= GameInstance->MaxLevels[GameInstance->CurrentStageIndex])
+	{
+		ATeam13_GameState* GameState = GetGameState<ATeam13_GameState>();
+		if (GameState)
+		{
+			if (IsCompleteGame())
 			{
-				PoolManager->InitializePool(AAiTestMonster::StaticClass(), 10);
-				UE_LOG(LogTemp, Warning, TEXT("Object Pool initialized from GameMode"));
-			}
-			else
+				// ending scene
+			}else
 			{
-				UE_LOG(LogTemp, Error, TEXT("Failed to get ObjectPoolManager subsystem!"));
+				GameState->EndStage();
 			}
+			
+		}
+	}*/
+}
+
+bool ATeam13_GameMode::IsCompleteGame()
+{
+	AHERO_Character* player = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (!player)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[GameMode]PlayerLevelUp: Player nullptr"));
+		return false;
+	}
+	UTeam13_GameInstance* GameInstance = GetGameInstance<UTeam13_GameInstance>();
+	if (!GameInstance)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[GameMode]PlayerLevelUp: GameInstance nullptr"));
+		return false;
+	}
+
+	//clear conditions
+	/*if (player->GetLevel() >= GameInstance->MaxLevels[GameInstance->CurrentStageIndex]
+	 *&& GameInstance->CurrentStageIndex >= GameInstance->MaxStageIndex)
+	{
+		return true;
+	}*/
+	return false;
+}
+
+void ATeam13_GameMode::CompleteGame()
+{
+	if (IsCompleteGame())
+	{
+		//clear call, ending scene
+	}
+}
+
+void ATeam13_GameMode::StartGameStage()
+{
+	UE_LOG(LogTemp, Display, TEXT("[Game Mode] Starting Game Stage"));
+	
+	UObjectPoolManager* PoolManager = GetWorld()->GetSubsystem<UObjectPoolManager>();
+	FString CurrentMapName = GetWorld()->GetMapName();
+	if (!CurrentMapName.Contains("StartMenu"))
+	{
+		if (PoolManager)
+		{
+			UE_LOG(LogTemp, Display, TEXT("[Game Mode] Starting initialize pool"));
+			PoolManager->InitializePool(AAiTestMonster::StaticClass(), 10);
 		}
 	}
 }
+
+
+
+

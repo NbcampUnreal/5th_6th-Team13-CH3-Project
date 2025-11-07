@@ -64,14 +64,14 @@ void AAiTestMonster::BeginPlay()
 	if (PlayerCharacter)
 	{
 		// 1. 즉시 아웃라인 상태를 업데이트합니다.
-		UpdateOutlineByPlayerLevel();
+		UpdateOutlineByPlayerLevel(0,PlayerCharacter->GetLevel());
 
 		// 2. 플레이어의 레벨업 이벤트에 우리 함수를 바인딩합니다.
-		//PlayerCharacter->OnPlayerLevelChanged.AddDynamic(this, &AAiTestMonster::UpdateOutlineByPlayerLevel);
+		PlayerCharacter->OnHeroLevelUp.AddDynamic(this, &AAiTestMonster::UpdateOutlineByPlayerLevel);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AiTestMonster: HERO_Character를 찾을 수 없습니다!"));
+		//UE_LOG(LogTemp, Warning, TEXT("AiTestMonster: HERO_Character를 찾을 수 없습니다!"));
 	}
 }
 
@@ -136,7 +136,7 @@ void AAiTestMonster::Tick(float DeltaTime)
 
 
 
-void AAiTestMonster::UpdateOutlineByPlayerLevel()
+void AAiTestMonster::UpdateOutlineByPlayerLevel(int oldlevel, int newlevel)
 {
 	if (!PlayerCharacter)
 	{

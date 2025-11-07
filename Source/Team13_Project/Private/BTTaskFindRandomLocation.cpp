@@ -42,11 +42,11 @@ EBTNodeResult::Type UBTTaskFindRandomLocation::ExecuteTask(UBehaviorTreeComponen
 		if (BlackboardComp)
 		{
 			BlackboardComp->SetValueAsVector(LocationKey.SelectedKeyName, RandomLocation.Location);
-			UE_LOG(LogTemp, Log, TEXT("[FindRandom] 새로운 목적지: %s"), *RandomLocation.Location.ToString());
+			//UE_LOG(LogTemp, Log, TEXT("[FindRandom] 새로운 목적지: %s"), *RandomLocation.Location.ToString());
 			return EBTNodeResult::Succeeded;  // 성공ㅋㅋ
 		}
 	}
     
-	UE_LOG(LogTemp, Warning, TEXT("[FindRandom] 갈 곳을 찾지 못했습니다"));
+	//UE_LOG(LogTemp, Warning, TEXT("[FindRandom] 갈 곳을 찾지 못했습니다"));
 	return EBTNodeResult::Failed;  // 실패
 }

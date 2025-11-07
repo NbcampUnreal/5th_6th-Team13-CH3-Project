@@ -9,13 +9,17 @@
 /**
  * 
  */
+class ABaseMonsterCharacter;
 UCLASS()
 class TEAM13_PROJECT_API ATeam13_GameMode : public AGameMode
 {
 	GENERATED_BODY()
 public:
 	ATeam13_GameMode();
-
-	virtual void BeginPlay() override;
-	
+	void MonsterKilled(ABaseMonsterCharacter* KilledMonster, int32 exp);
+	void PlayerLevelUp();
+	bool IsCompleteGame();
+	void CompleteGame();
+	UFUNCTION(BlueprintCallable)
+	void StartGameStage();
 };

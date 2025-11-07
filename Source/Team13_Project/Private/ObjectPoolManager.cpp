@@ -73,8 +73,8 @@ void UObjectPoolManager::InitializePool(TSubclassOf<AActor> DefaultPoolClass, in
             UE_LOG(LogTemp, Warning, TEXT("[ObjectPoolManager] No valid class for enemy at index %d"), i);
             continue;
         }
-
-        AActor* NewActor = GetWorld()->SpawnActor<AActor>(SpawnClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+        const FVector SpawnLocation = FVector(0, 0, -10000.0f);
+        AActor* NewActor = GetWorld()->SpawnActor<AActor>(SpawnClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
         if (!NewActor) continue;
 
         if (NewActor->GetClass()->ImplementsInterface(UPoolable::StaticClass()))
@@ -137,7 +137,7 @@ void UObjectPoolManager::ReturnToPool(AActor* Poolable)
     UClass* KeyClass = GetPoolKey(Poolable->GetClass());
     FPoolArray& ObjectPool = ObjectPools.FindOrAdd(KeyClass);
 
-    IPoolable::Execute_OnReturnToPool(Poolable);
+    //IPoolable::Execute_OnReturnToPool(Poolable);
     Poolable->SetActorHiddenInGame(true);
     Poolable->SetActorEnableCollision(false);
 
