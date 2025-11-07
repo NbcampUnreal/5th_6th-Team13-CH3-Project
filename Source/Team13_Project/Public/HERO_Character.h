@@ -38,6 +38,7 @@ class UCharacterMovementComponent;
 class UDecalComponent;
 class UMaterialInterface;
 class UCombatComponent;
+class UAnimMontage;
 
 UCLASS()
 class TEAM13_PROJECT_API AHERO_Character : public ACharacter, public IHitDamageable
@@ -79,6 +80,7 @@ protected:
     void BeginMeteorAiming();
     void UpdateMeteorCursor();
     void CommitMeteorStrike();
+    void PlayMontage(UAnimMontage* Montage, float Rate = 1.f);
 
     // 충돌 감지 함수
     UFUNCTION()
@@ -190,6 +192,13 @@ public:
     // 낙하 시 스폰할 구형 액터 클래스
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
     TSubclassOf<AActor> MeteorAOESphereClass;
+    
+    // [추가] 메테오 스킬 몽타주 (상승/착지)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
+    UAnimMontage* AM_Meteor_Ascend = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
+    UAnimMontage* AM_Meteor_Land = nullptr;
 
     // 메테오 파라미터
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")

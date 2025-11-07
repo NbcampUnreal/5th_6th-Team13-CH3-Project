@@ -18,6 +18,23 @@
 #include "Components/DecalComponent.h"
 #include "DrawDebugHelpers.h"
 
+
+#include "Animation/AnimInstance.h"   // [추가] 몽타주 재생/정지
+#include "Animation/AnimMontage.h"    // [추가] UAnimMontage
+
+void AHERO_Character::PlayMontage(UAnimMontage* Montage, float Rate)
+{
+	if (!Montage) return;
+
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		if (UAnimInstance* Anim = MeshComp->GetAnimInstance())
+		{
+			Anim->Montage_Play(Montage, Rate);
+		}
+	}
+}
+
 AHERO_Character::AHERO_Character()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -103,7 +120,7 @@ AHERO_Character::AHERO_Character()
 	MeteorCursorDecal->SetupAttachment(GetRootComponent());
 	MeteorCursorDecal->SetHiddenInGame(true);
 	MeteorCursorDecal->DecalSize = FVector(256.f, 128.f, 128.f);
-	// ------------------------------------------------------------------
+
 }
 
 void AHERO_Character::BeginPlay()
@@ -161,7 +178,6 @@ void AHERO_Character::BeginPlay()
 			}
 		}
 	}
-	// -----------------------------------------------------------------------------------
 }
 
 void AHERO_Character::Tick(float DeltaSeconds)
@@ -183,7 +199,6 @@ void AHERO_Character::Tick(float DeltaSeconds)
 		}
 		return;
 	}
-	// -------------------------------------------------------------------------------
 
 	// 이동 처리: 상태에 따라 다르게
 	if (CurrentSkillState == ESkillState::Dashing)
@@ -249,10 +264,7 @@ void AHERO_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 				EI->BindAction(PlayerController->IA_HERO_MeteorStrike, ETriggerEvent::Triggered, this, &AHERO_Character::Input_MeteorStrike);
 			}
 		}
-
 		// IA_HERO_MeteorStrike 바인딩
-		
-		// -----------------------------------------------------------------------------------------
 	}
 }
 
@@ -624,6 +636,10 @@ void AHERO_Character::BeginMeteorAscend()
 
 	if (MeteorCursorDecal)
 		MeteorCursorDecal->SetHiddenInGame(true);
+
+	// [추가] 상승 모션 재생
+	PlayMontage(AM_Meteor_Ascend, 1.f);
+
 }
 
 void AHERO_Character::TickMeteor(float DeltaSeconds)
@@ -667,12 +683,24 @@ void AHERO_Character::BeginMeteorAiming()
 	{
 		Move->GravityScale = 0.f;
 		Move->StopMovementImmediately();
-		Move->SetMovementMode(MOVE_Flying);   // ???? ??? ????,???????
+		Move->SetMovementMode(MOVE_Flying);   
 		Move->Velocity = FVector::ZeroVector;
 	}
 
 	if (MeteorCursorDecal)
 		MeteorCursorDecal->SetHiddenInGame(false);
+
+	// [추가] 상승 몽타주 일시정지 → 포즈 고정
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		if (UAnimInstance* Anim = MeshComp->GetAnimInstance())
+		{
+			if (AM_Meteor_Ascend)
+			{
+				Anim->Montage_Pause(AM_Meteor_Ascend);
+			}
+		}
+	}
 }
 
 void AHERO_Character::UpdateMeteorCursor()
@@ -741,6 +769,23 @@ void AHERO_Character::Landed(const FHitResult& Hit)
 
 	if (MeteorState == EMeteorState::Descending)
 	{
+		// [추가] 착지 순간: 상승 몽타주 정지 후 착지 몽타주 재생
+		if (USkeletalMeshComponent* MeshComp = GetMesh())
+		{
+			if (UAnimInstance* Anim = MeshComp->GetAnimInstance())
+			{
+				if (AM_Meteor_Ascend)
+				{
+					// 부드럽게 끊고(0.15f 블렌드아웃), 포즈 해제
+					Anim->Montage_Stop(0.15f, AM_Meteor_Ascend);
+				}
+				if (AM_Meteor_Land)
+				{
+					Anim->Montage_Play(AM_Meteor_Land, 1.f);
+				}
+			}
+		}
+
 		MeteorState = EMeteorState::None;
 
 		if (MeteorCursorDecal)
