@@ -169,15 +169,15 @@ void ATeam13_PlayerController::ShowEndMenu(bool bIsReStart)
 			}
 		}
 
-		//레벨 text
-		if (UTextBlock* TotalLevelText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("LevelText")))
+		if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 		{
-			if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+			if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
 			{
-				if (ATeam13_PlayerController* Team13_PlayerController = Cast<ATeam13_PlayerController>(PlayerController))
+				ACharacter* player = PlayerController->GetCharacter();
+				if (AHERO_Character* HeroCharacter = Cast<AHERO_Character>(player))
 				{
-					ACharacter* player = PlayerController->GetCharacter();
-					if (AHERO_Character* HeroCharacter = Cast<AHERO_Character>(player))
+					//레벨 text
+					if (UTextBlock* TotalLevelText = Cast<UTextBlock>(EndWidgetInstance->GetWidgetFromName("LevelText")))
 					{
 						TotalLevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level)));
 					}
