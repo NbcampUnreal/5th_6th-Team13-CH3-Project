@@ -1,5 +1,5 @@
 #include "HERO_Character.h"
-
+#include "TimerManager.h"
 #include "AiTestMonster.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
@@ -8,7 +8,7 @@
 #include "GameFramework/PlayerController.h"
 
 #include "CombatComponent.h"//충돌 데미지 함수
-
+#include "Kismet/GameplayStatics.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
@@ -18,6 +18,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/DecalComponent.h"
 #include "DrawDebugHelpers.h"
+
 
 AHERO_Character::AHERO_Character()
 {
@@ -277,23 +278,11 @@ void AHERO_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
  * ------------------------------------------------- */
 void AHERO_Character::HandleCooldowns(float DeltaSeconds)
 {
-	// 대쉬 쿨다운 남은 시간 줄이기
-	if (DashCooldownRemaining > 0.0f)
-	{
-		DashCooldownRemaining -= DeltaSeconds;
-		if (DashCooldownRemaining < 0.0f)
-		{
-			DashCooldownRemaining = 0.0f;
-		}
-	}
-
-	// Dashing 상태에서의 남은 지속시간 줄이기
 	if (CurrentSkillState == ESkillState::Dashing)
 	{
 		DashTimer -= DeltaSeconds;
 		if (DashTimer <= 0.0f)
 		{
-			// 대쉬 끝 → Normal로 복귀
 			CurrentSkillState = ESkillState::Normal;
 			DashTimer = 0.0f;
 		}
@@ -498,18 +487,23 @@ void AHERO_Character::Input_DashSkill(const FInputActionValue& /*Value*/)
 	if (MeteorState != EMeteorState::None)
 		return;
 
-	// ???? ??
-	if (DashCooldownRemaining > 0.0f)
+	if (!bCanDash)
 		return;
 
 	// ??? ?뽬
 	CurrentSkillState = ESkillState::Dashing;
 	DashTimer = DashDuration;
-	DashCooldownRemaining = DashCooldown;
+	bCanDash = false;
+
+
 	CURRENT_V = MAX_V;
 	// 이미 Dashing이면 무시
+	GetWorldTimerManager().SetTimer(DashCooldownTimer, this, &AHERO_Character::ResetDash, DashCooldown, false);
 }
-
+void AHERO_Character::ResetDash()
+{
+	bCanDash = true;
+}
 void AHERO_Character::SyncSizeToScale() // 크기 증가 함수 - CSM
 {
 	//스케일 크기 고정
@@ -605,6 +599,10 @@ void AHERO_Character::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* Other,
 void AHERO_Character::Input_MeteorStrike(const FInputActionValue& /*Value*/)
 {
 	if (MeteorState == EMeteorState::Descending)
+		return;
+
+	// 메테오 사용 가능 여부 체크
+	if (!bCanMeteor && MeteorState == EMeteorState::None)
 		return;
 
 	if (MeteorState == EMeteorState::None)
@@ -770,7 +768,19 @@ void AHERO_Character::Landed(const FHitResult& Hit)
 				AOE->SetLifeSpan(MeteorAOESphereLifeSeconds);
 			}
 		}
+
+		// 여기서 메테오 쿨타임 시작
+		if (bCanMeteor)
+		{
+			bCanMeteor = false;
+			GetWorldTimerManager().SetTimer(MeteorCooldownTimer, this, &AHERO_Character::ResetMeteor, MeteorCooldown, false);
+		}
 	}
+}
+
+void AHERO_Character::ResetMeteor()
+{
+	bCanMeteor = true;
 }
 
 // HP 데미지
@@ -815,34 +825,43 @@ float AHERO_Character::GetExpProgress01() const
 
 void AHERO_Character::FireProjectile()
 {
-	if (!ProjectileClass_Player) return;
+	// 쿨타임 중이면 발사 불가
+	if (!bCanFire)
+		return;
+
+	bCanFire = false; // 바로 잠금
+
+	// ===== 실제 발사 로직 =====
+	if (!ProjectileClass_Player)
+		return;
 
 	const FVector CamLoc = CameraComp ? CameraComp->GetComponentLocation() : GetActorLocation();
 	const FRotator CamRot = CameraComp ? CameraComp->GetComponentRotation() : GetActorRotation();
 	const FVector CamForward = CamRot.Vector();
-
-	const FVector SpawnLoc = CamLoc + CamForward * 100.f;
+	const FVector SpawnLoc = CamLoc + CamForward * 500.f;
 	const FRotator SpawnRot = CamRot;
 
 	FActorSpawnParameters Params;
 	Params.Owner = this;
 	Params.Instigator = this;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	AFixedDamageProjectile* Proj =GetWorld()->SpawnActor<AFixedDamageProjectile>(ProjectileClass_Player, SpawnLoc, SpawnRot, Params);
-	if (!Proj) return;
+	AFixedDamageProjectile* Proj = GetWorld()->SpawnActor<AFixedDamageProjectile>(
+		ProjectileClass_Player, SpawnLoc, SpawnRot, Params);
 
-	if (CombatComp)
+	if (Proj)
 	{
-		Proj->SetSourceCombat(CombatComp);
+		if (CombatComp)
+			Proj->SetSourceCombat(CombatComp);
+
+		Proj->InitDirection(CamForward);
 	}
 
-	Proj->InitDirection(CamForward);
+	// ===== 쿨타임 시작 =====
+	GetWorldTimerManager().SetTimer(FireCooldownTimer, this, &AHERO_Character::ResetFire, FireCooldown, false);
+}
 
-	
-	if (Proj->ProjectileMovement)
-	{
-		const float S = Proj->ProjectileMovement->InitialSpeed;
-		Proj->ProjectileMovement->Velocity = CamForward * S;
-	}
+void AHERO_Character::ResetFire()
+{
+	bCanFire = true; // 다시 발사 가능
 }
