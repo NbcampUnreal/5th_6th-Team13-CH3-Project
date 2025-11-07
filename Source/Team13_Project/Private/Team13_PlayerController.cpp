@@ -14,6 +14,7 @@ ATeam13_PlayerController::ATeam13_PlayerController()
 	IA_HERO_Look(nullptr),
 	IA_HERO_Accelerate(nullptr),
 	IA_HERO_DashSkill(nullptr),
+	IA_HERO_MeteorStrike(nullptr),
 	HUDWidgetClass(nullptr),
 	HUDWidgetInstance(nullptr),
 	MainMenuWidgetClass(nullptr),

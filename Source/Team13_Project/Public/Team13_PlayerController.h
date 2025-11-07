@@ -30,37 +30,39 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* IA_HERO_DashSkill;
 
-	//°ÔÀÓÁß HUD
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* IA_HERO_MeteorStrike;
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ HUD
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
 	TSubclassOf<UUserWidget> HUDWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HUD")
 	UUserWidget* HUDWidgetInstance;
 
-	//¸ÞÀÎ¸Þ´º HUD
+	//ï¿½ï¿½ï¿½Î¸Þ´ï¿½ HUD
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu")
 	TSubclassOf<UUserWidget> MainMenuWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Menu")
 	UUserWidget* MainMenuWidgetInstance;
 
-	//°¡ÀÌµå HUD
+	//ï¿½ï¿½ï¿½Ìµï¿½ HUD
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu")
 	TSubclassOf<UUserWidget> GuideWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Menu")
 	UUserWidget* GuideWidgetInstance;
 
-	//¼ÂÆÃ HUD
+	//ï¿½ï¿½ï¿½ï¿½ HUD
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu")
 	TSubclassOf<UUserWidget> SettingWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Menu")
 	UUserWidget* SettingWidgetInstance;
 
-	//¿£µù HUD
+	//ï¿½ï¿½ï¿½ï¿½ HUD
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu")
 	TSubclassOf<UUserWidget> EndWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Menu")
 	UUserWidget* EndWidgetInstance;
 
-	//Å©·¹µ÷ HUD
+	//Å©ï¿½ï¿½ï¿½ï¿½ HUD
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu")
 	TSubclassOf<UUserWidget> CreditWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Menu")

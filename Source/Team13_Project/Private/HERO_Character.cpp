@@ -1,5 +1,6 @@
 #include "HERO_Character.h"
 
+#include "AiTestMonster.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -237,19 +238,20 @@ void AHERO_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 			// 대쉬 스킬
 			if (PlayerController->IA_HERO_DashSkill)
 			{
-				EI->BindAction(PlayerController->IA_HERO_DashSkill, ETriggerEvent::Started, this, &AHERO_Character::Input_DashSkill);
+				EI->BindAction(PlayerController->IA_HERO_DashSkill, ETriggerEvent::Triggered, this, &AHERO_Character::Input_DashSkill);
 			}
 			else
 			{
 				UE_LOG(LogTemp, Error, TEXT("Dash X"));
 			}
+			if (PlayerController->IA_HERO_MeteorStrike)
+			{
+				EI->BindAction(PlayerController->IA_HERO_MeteorStrike, ETriggerEvent::Triggered, this, &AHERO_Character::Input_MeteorStrike);
+			}
 		}
 
 		// IA_HERO_MeteorStrike 바인딩
-		if (IA_HERO_MeteorStrike)
-		{
-			EI->BindAction(IA_HERO_MeteorStrike, ETriggerEvent::Started, this, &AHERO_Character::Input_MeteorStrike);
-		}
+		
 		// -----------------------------------------------------------------------------------------
 	}
 }
@@ -459,25 +461,37 @@ void AHERO_Character::Input_Look(const FInputActionValue& Value)
 // 대쉬 스킬 (IA_HERO_DashSkill)
 void AHERO_Character::Input_DashSkill(const FInputActionValue& /*Value*/)
 {
-	// Normal 상태에서 쿨다운이 0이면 조준 상태로 진입
-	if (CurrentSkillState == ESkillState::Normal && DashCooldownRemaining <= 0.0f)
-	{
-		CurrentSkillState = ESkillState::AimingDash;
+	UE_LOG(LogTemp, Error, TEXT("AHERO_Character::Input_DashSkill"));
+	//// Normal 상태에서 쿨다운이 0이면 조준 상태로 진입
+	//if (CurrentSkillState == ESkillState::Normal && DashCooldownRemaining <= 0.0f)
+	//{
+	//	CurrentSkillState = ESkillState::AimingDash;
+	//	return;
+	//}
+
+	//// 조준 상태에서 다시 누르면 실제 돌진 시작
+	//if (CurrentSkillState == ESkillState::AimingDash)
+	//{
+	//	CurrentSkillState = ESkillState::Dashing;
+	//	DashTimer = DashDuration;
+	//	DashCooldownRemaining = DashCooldown;
+
+	//	// 돌진 시작 즉시 최고속도까지 끌어올림
+	//	CURRENT_V = MAX_V;
+	//	return;
+	//}
+	if (MeteorState != EMeteorState::None)
 		return;
-	}
 
-	// 조준 상태에서 다시 누르면 실제 돌진 시작
-	if (CurrentSkillState == ESkillState::AimingDash)
-	{
-		CurrentSkillState = ESkillState::Dashing;
-		DashTimer = DashDuration;
-		DashCooldownRemaining = DashCooldown;
-
-		// 돌진 시작 즉시 최고속도까지 끌어올림
-		CURRENT_V = MAX_V;
+	// ???? ??
+	if (DashCooldownRemaining > 0.0f)
 		return;
-	}
 
+	// ??? ?뽬
+	CurrentSkillState = ESkillState::Dashing;
+	DashTimer = DashDuration;
+	DashCooldownRemaining = DashCooldown;
+	CURRENT_V = MAX_V;
 	// 이미 Dashing이면 무시
 }
 
@@ -599,8 +613,10 @@ void AHERO_Character::BeginMeteorAscend()
 		MeteorTargetZ = MeteorStartZ + MeteorTargetHeight;
 
 		MeteorSavedGravityScale = Move->GravityScale;
-		Move->GravityScale = 0.f;
+
 		Move->StopMovementImmediately();
+		Move->GravityScale = 0.f;
+		Move->SetMovementMode(MOVE_Flying);   // ???? ????, ???????????
 		Move->Velocity = FVector::ZeroVector;
 	}
 
@@ -620,12 +636,12 @@ void AHERO_Character::TickMeteor(float DeltaSeconds)
 		if (P.Z >= MeteorTargetZ)
 		{
 			P.Z = MeteorTargetZ;
-			SetActorLocation(P);
+			SetActorLocation(P, false, nullptr, ETeleportType::TeleportPhysics);
 			BeginMeteorAiming();
 		}
 		else
 		{
-			SetActorLocation(P);
+			SetActorLocation(P, false, nullptr, ETeleportType::TeleportPhysics);
 		}
 		return;
 	}
@@ -633,8 +649,11 @@ void AHERO_Character::TickMeteor(float DeltaSeconds)
 	if (MeteorState == EMeteorState::Aiming)
 	{
 		FVector P = GetActorLocation();
-		P.Z = MeteorTargetZ;
-		SetActorLocation(P);
+		if (!FMath::IsNearlyEqual(P.Z, MeteorTargetZ, 1.f))
+		{
+			P.Z = MeteorTargetZ;
+			SetActorLocation(P, false, nullptr, ETeleportType::TeleportPhysics);
+		}
 
 		UpdateMeteorCursor();
 	}
@@ -648,6 +667,7 @@ void AHERO_Character::BeginMeteorAiming()
 	{
 		Move->GravityScale = 0.f;
 		Move->StopMovementImmediately();
+		Move->SetMovementMode(MOVE_Flying);   // ???? ??? ????,???????
 		Move->Velocity = FVector::ZeroVector;
 	}
 
@@ -700,7 +720,7 @@ void AHERO_Character::CommitMeteorStrike()
 	}
 	Target.Z = MeteorTargetZ;
 
-	SetActorLocation(Target, false);
+	SetActorLocation(Target, false, nullptr, ETeleportType::TeleportPhysics);
 
 	if (MeteorCursorDecal)
 		MeteorCursorDecal->SetHiddenInGame(true);
@@ -710,6 +730,7 @@ void AHERO_Character::CommitMeteorStrike()
 	if (UCharacterMovementComponent* Move = GetCharacterMovement())
 	{
 		Move->GravityScale = MeteorSavedGravityScale;
+		Move->SetMovementMode(MOVE_Falling);          // ???? ????
 		Move->Velocity = FVector(0.f, 0.f, -MeteorFallSpeed);
 	}
 }
