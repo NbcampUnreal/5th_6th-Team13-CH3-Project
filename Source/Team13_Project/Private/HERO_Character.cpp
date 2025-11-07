@@ -1,5 +1,6 @@
 #include "HERO_Character.h"
 
+#include "AiTestMonster.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -237,19 +238,20 @@ void AHERO_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 			// 대쉬 스킬
 			if (PlayerController->IA_HERO_DashSkill)
 			{
-				EI->BindAction(PlayerController->IA_HERO_DashSkill, ETriggerEvent::Started, this, &AHERO_Character::Input_DashSkill);
+				EI->BindAction(PlayerController->IA_HERO_DashSkill, ETriggerEvent::Triggered, this, &AHERO_Character::Input_DashSkill);
 			}
 			else
 			{
 				UE_LOG(LogTemp, Error, TEXT("Dash X"));
 			}
+			if (PlayerController->IA_HERO_MeteorStrike)
+			{
+				EI->BindAction(PlayerController->IA_HERO_MeteorStrike, ETriggerEvent::Triggered, this, &AHERO_Character::Input_MeteorStrike);
+			}
 		}
 
 		// IA_HERO_MeteorStrike 바인딩
-		if (IA_HERO_MeteorStrike)
-		{
-			EI->BindAction(IA_HERO_MeteorStrike, ETriggerEvent::Started, this, &AHERO_Character::Input_MeteorStrike);
-		}
+		
 		// -----------------------------------------------------------------------------------------
 	}
 }
@@ -459,6 +461,7 @@ void AHERO_Character::Input_Look(const FInputActionValue& Value)
 // 대쉬 스킬 (IA_HERO_DashSkill)
 void AHERO_Character::Input_DashSkill(const FInputActionValue& /*Value*/)
 {
+	UE_LOG(LogTemp, Error, TEXT("AHERO_Character::Input_DashSkill"));
 	// Normal 상태에서 쿨다운이 0이면 조준 상태로 진입
 	if (CurrentSkillState == ESkillState::Normal && DashCooldownRemaining <= 0.0f)
 	{
@@ -575,6 +578,7 @@ void AHERO_Character::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* Other,
 
 void AHERO_Character::Input_MeteorStrike(const FInputActionValue& /*Value*/)
 {
+	UE_LOG(LogTemp, Display, TEXT("Input_MeteorStrike"));
 	if (MeteorState == EMeteorState::Descending)
 		return;
 
