@@ -31,9 +31,11 @@ void ATeam13_GameMode::MonsterKilled(ABaseMonsterCharacter* KilledMonster, int32
 		if (player)
 		{
 			//플레이어 경험치 증가 함수
-			//player->addexp(exp);
+			player->AddExp(exp);
+			UE_LOG(LogTemp, Display, TEXT("[Game Mode] Player exp: %f"),player->EXP);
 		}
 	}
+	
 }
 
 void ATeam13_GameMode::PlayerLevelUp()
