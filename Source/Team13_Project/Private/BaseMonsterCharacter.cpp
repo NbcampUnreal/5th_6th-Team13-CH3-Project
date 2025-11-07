@@ -92,7 +92,6 @@ void ABaseMonsterCharacter::OnDead()
 	}
 	if (UCharacterMovementComponent* M = GetCharacterMovement()) M->DisableMovement();
 	DetachFromControllerPendingDestroy();
-
 }
 void ABaseMonsterCharacter::EnableRagdollAndImpulse(const FVector& Impulse)
 {

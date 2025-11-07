@@ -31,9 +31,6 @@ public:
 	UInputAction* IA_HERO_DashSkill;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* IA_HERO_Throw;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* IA_HERO_MeteorStrike;
 	//������ HUD
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")

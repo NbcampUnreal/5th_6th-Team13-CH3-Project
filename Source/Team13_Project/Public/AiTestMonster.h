@@ -49,5 +49,5 @@ protected:
 
 	/** 플레이어 레벨 변경 시 호출될 함수 */
 	UFUNCTION()
-	void UpdateOutlineByPlayerLevel(int32 oldlevel, int32 newlevel);
+	void UpdateOutlineByPlayerLevel();
 };

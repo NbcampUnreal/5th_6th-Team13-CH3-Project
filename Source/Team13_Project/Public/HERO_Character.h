@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
-
 #include "HitDamageable.h" // 데미지 인터페이스
 #include "HERO_Character.generated.h"
 
@@ -39,10 +38,7 @@ class UCharacterMovementComponent;
 class UDecalComponent;
 class UMaterialInterface;
 class UCombatComponent;
-
 class UAnimMontage;
-class AFixedDamageProjectile;
-
 
 UCLASS()
 class TEAM13_PROJECT_API AHERO_Character : public ACharacter, public IHitDamageable
@@ -116,9 +112,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* IA_HERO_MeteorStrike;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    UInputAction* IA_HERO_Throw;
-
     // 이동 스탯
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement Stats")
     float CURRENT_V;
@@ -182,7 +175,8 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
     float DashTimer;
 
-    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill")
+    float DashCooldown;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill")
     float DashCooldownRemaining;
@@ -293,55 +287,6 @@ public:
     virtual void  OnDead() override { OnHeroDeath.Broadcast(); }
     virtual void  EnableRagdollAndImpulse(const FVector& Impulse) override;
 
-
-    
-
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Projectile")
-    TSubclassOf<AFixedDamageProjectile> ProjectileClass_Player;
-
-   
-
-    UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
-    void FireProjectile();
-
-
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
     UCombatComponent* CombatComp;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Fire")
-    float FireCooldown = 0.3f; // 0.3초마다 발사 가능 (초당 약 3.3발)
-
-    // 내부 타이머
-    FTimerHandle FireCooldownTimer;
-
-    // 쿨타임 중인지 여부
-    bool bCanFire = true;
-
-   
-
-    // 쿨타임 리셋
-    void ResetFire();
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Cooldown")
-    bool bCanDash = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill|Cooldown")
-    float DashCooldown = 10.0f;
-
-    FTimerHandle DashCooldownTimer;
-    void ResetDash(); // 대시 쿨타임 해제
-
-    // 메테오도 동일 패턴
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill|Cooldown")
-    bool bCanMeteor = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill|Cooldown")
-    float MeteorCooldown = 8.0f;
-
-    FTimerHandle MeteorCooldownTimer;
-    void ResetMeteor(); // 메테오 쿨타임 해제
-
-
-
 };

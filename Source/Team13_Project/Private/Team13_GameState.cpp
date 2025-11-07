@@ -170,13 +170,19 @@ void ATeam13_GameState::UpdateHUD()
 						if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("TimeText"))))
 						{
 							float RemainingTime = GetWorldTimerManager().GetTimerRemaining(StageTimerHandle);
-							TimeText->SetText(FText::FromString(FString::Printf(TEXT("Time\n%0.f"), RemainingTime)));
+							TimeText->SetText(FText::FromString(FString::Printf(TEXT("Time : %0.f"), RemainingTime)));
 						}
 
+						//Exp Text
+						/*if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("ExpText"))))
+						{
+							ExpText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), 캐릭터 현재 경험치, 최대경험치)));
+						}*/
+						
 						//Stage Text
 						if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("StageText"))))
 						{
-							ExpText->SetText(FText::FromString(FString::Printf(TEXT("Stagt\n%d"), CurrentStageIndex + 1)));
+							ExpText->SetText(FText::FromString(FString::Printf(TEXT("Stagt : %d"), CurrentStageIndex + 1)));
 						}
 						
 						//Kill Text
@@ -205,13 +211,7 @@ void ATeam13_GameState::UpdateHUD()
 							//PlayerLevel Text
 							if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("LevelText"))))
 							{
-								LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level\n%d"), HeroCharacter->Level)));
-							}
-
-							//EXP text
-							if (UTextBlock* EXPText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName("ExpText")))
-							{
-								EXPText->SetText(FText::FromString(FString::Printf(TEXT("%0.f / %0.f"), HeroCharacter->EXP, HeroCharacter->MAX_EXP)));
+								LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level)));
 							}
 						}
 					}
