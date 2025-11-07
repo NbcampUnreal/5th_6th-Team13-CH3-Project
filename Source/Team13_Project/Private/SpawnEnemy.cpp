@@ -33,7 +33,7 @@ void ASpawnEnemy::BeginPlay()
 	SpawningSphere->OnComponentBeginOverlap.AddDynamic(this, &ASpawnEnemy::OnOverlapBegin);
 }
 
-FEnemySpawnRow* ASpawnEnemy::GetRandomEnemy() const
+FEnemySpawnRow* ASpawnEnemy::GetRandomEnemy()
 {
 	if (!EnemyDataTable) return nullptr;
 

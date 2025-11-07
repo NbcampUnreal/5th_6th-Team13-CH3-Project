@@ -157,7 +157,9 @@ void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>&
     }
 }
 
+
 void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& Target,  float Damage,const FVector& HitImpulseDir) 
+
 {
     if (!Target || Target->IsDead())
         return;
@@ -449,6 +451,7 @@ void UCombatComponent::EnsureMidAndSetScalar(UMeshComponent* Mesh, FName Param, 
             MID->SetScalarParameterValue(Param, Value);
         }
     }
+
 }
 
 void UCombatComponent::SetBlink(AActor* Target, bool bOn) const

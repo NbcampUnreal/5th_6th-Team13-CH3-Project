@@ -71,7 +71,7 @@ void AAiTestMonster::BeginPlay()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AiTestMonster: HERO_Character를 찾을 수 없습니다!"));
+		//UE_LOG(LogTemp, Warning, TEXT("AiTestMonster: HERO_Character를 찾을 수 없습니다!"));
 	}
 }
 
