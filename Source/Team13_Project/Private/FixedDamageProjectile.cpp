@@ -27,6 +27,7 @@ AFixedDamageProjectile::AFixedDamageProjectile()
     ProjectileMovement->ProjectileGravityScale = 0.f;
     ProjectileMovement->InitialSpeed = 2000.f;
     ProjectileMovement->MaxSpeed = 2000.f;
+    Collision->OnComponentHit.AddDynamic(this, &AFixedDamageProjectile::OnHit);
 }
 
 
@@ -48,6 +49,7 @@ void AFixedDamageProjectile::BeginPlay()
         Collision->SetNotifyRigidBodyCollision(true);
         
         if (ProjectileMovement) ProjectileMovement->Deactivate();
+        
     }
     else
     {
@@ -62,7 +64,13 @@ void AFixedDamageProjectile::BeginPlay()
             ProjectileMovement->MaxSpeed = InitialSpeed;
         }
     }
-
+    if (ProjectileMovement)
+    {
+        const FVector Dir = InitialDirection.IsNearlyZero()
+            ? GetActorForwardVector()
+            : InitialDirection.GetSafeNormal();
+        ProjectileMovement->Velocity = Dir * ProjectileMovement->InitialSpeed;
+    }
     ApplyTravelVelocity();
 }
 
@@ -85,30 +93,14 @@ void AFixedDamageProjectile::ApplyTravelVelocity()
     }
 }
 
-void AFixedDamageProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-    bool bFromSweep, const FHitResult& SweepResult)
-{
-    
-    TryApplyDamageTo(OtherActor, SweepResult);
-}
 
 void AFixedDamageProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
    
-    TryApplyDamageTo(OtherActor, Hit);
+    OnBeginOverlap(HitComp, OtherActor, OtherComp, 0, false, Hit);
 }
 
-void AFixedDamageProjectile::TryApplyDamageTo(AActor* OtherActor, const FHitResult& Hit)
-{
-
-    if (ProjectileMovement)
-    {
-        const FVector Forward = GetActorForwardVector();
-        ProjectileMovement->Velocity = Forward * ProjectileMovement->InitialSpeed;
-    }
-}
 
 
 void AFixedDamageProjectile::OnBeginOverlap( UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,int32 OtherBodyIndex, bool bFromSweep,const FHitResult& SweepResult)
@@ -130,24 +122,21 @@ void AFixedDamageProjectile::OnBeginOverlap( UPrimitiveComponent* OverlappedComp
     Target.SetObject(OtherActor);
     Target.SetInterface(Cast<IHitDamageable>(OtherActor));
 
-    FVector Dir = FVector::ZeroVector;
-    if (bUsePhysics)
-    {
-        Dir = Collision->GetComponentVelocity().GetSafeNormal();
-        if (Dir.IsNearlyZero()) Dir = GetActorForwardVector();
-    }
-    else
-    {
-        Dir = ProjectileMovement ? ProjectileMovement->Velocity.GetSafeNormal() : GetActorForwardVector();
-    }
+    // 가해 방향 계산
+    const FVector Dir = bUsePhysics
+        ? (Collision->GetComponentVelocity().GetSafeNormal().IsNearlyZero()
+            ? GetActorForwardVector()
+            : Collision->GetComponentVelocity().GetSafeNormal())
+        : (ProjectileMovement
+            ? ProjectileMovement->Velocity.GetSafeNormal()
+            : GetActorForwardVector());
 
-    
+    // 1) 데미지 1회
     Combat->ApplyFixedDamage(Target, Damage, Dir);
 
+    // 2) 피드백 1회
     AActor* AttackerActor = GetInstigator() ? static_cast<AActor*>(GetInstigator()) : this;
-    Combat->ApplyCollisionFeedbackForDefender(Target, AttackerActor, Hit);
-    const FVector Dir = ProjectileMovement ? ProjectileMovement->Velocity.GetSafeNormal() : GetActorForwardVector();
-    Combat->ApplyFixedDamage(Target, Damage, Dir);
+    Combat->ApplyCollisionFeedbackForDefender(Target, AttackerActor, SweepResult);
 
     if (bDestroyOnHit)
         Destroy();

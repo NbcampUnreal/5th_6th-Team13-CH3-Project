@@ -47,6 +47,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
     bool bDestroyOnHit = true;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+    FVector InitialDirection = FVector::ZeroVector;
 
     // 이동 모드 스위치
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile|Mode")
@@ -68,7 +70,8 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Projectile|Mode")
     void SetUsePhysics(bool bInUsePhysics) { bUsePhysics = bInUsePhysics; }
 
-
+    UFUNCTION(BlueprintCallable, Category = "Projectile")
+    void InitDirection(const FVector& Dir) { InitialDirection = Dir; }
 
 protected:
     virtual void BeginPlay() override;

@@ -14,7 +14,8 @@
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "Team13_PlayerController.h"
-
+#include "FixedDamageProjectile.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/DecalComponent.h"
 #include "DrawDebugHelpers.h"
 
@@ -161,6 +162,12 @@ void AHERO_Character::BeginPlay()
 			}
 		}
 	}
+
+	Tags.AddUnique(FName("Player"));
+	if (CombatComp)
+	{
+		CombatComp->InitializeComponent();
+	}
 	// -----------------------------------------------------------------------------------
 }
 
@@ -248,7 +255,15 @@ void AHERO_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 			{
 				EI->BindAction(PlayerController->IA_HERO_MeteorStrike, ETriggerEvent::Triggered, this, &AHERO_Character::Input_MeteorStrike);
 			}
+			if (PlayerController->IA_HERO_Throw)
+			{
+				EI->BindAction(PlayerController->IA_HERO_Throw, ETriggerEvent::Triggered, this, &AHERO_Character::FireProjectile);
+			}
 		}
+
+		if (IA_HERO_Throw)
+			EI->BindAction(IA_HERO_Throw, ETriggerEvent::Started, this, &AHERO_Character::FireProjectile);
+	
 
 		// IA_HERO_MeteorStrike ¹ÙÀÎµù
 		
@@ -796,4 +811,38 @@ float AHERO_Character::GetExpProgress01() const
 {
 	const float Den = (MAX_EXP > 0.f ? MAX_EXP : 1.f);
 	return FMath::Clamp(EXP / Den, 0.f, 1.f);
+}
+
+void AHERO_Character::FireProjectile()
+{
+	if (!ProjectileClass_Player) return;
+
+	const FVector CamLoc = CameraComp ? CameraComp->GetComponentLocation() : GetActorLocation();
+	const FRotator CamRot = CameraComp ? CameraComp->GetComponentRotation() : GetActorRotation();
+	const FVector CamForward = CamRot.Vector();
+
+	const FVector SpawnLoc = CamLoc + CamForward * 100.f;
+	const FRotator SpawnRot = CamRot;
+
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	Params.Instigator = this;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	AFixedDamageProjectile* Proj =GetWorld()->SpawnActor<AFixedDamageProjectile>(ProjectileClass_Player, SpawnLoc, SpawnRot, Params);
+	if (!Proj) return;
+
+	if (CombatComp)
+	{
+		Proj->SetSourceCombat(CombatComp);
+	}
+
+	Proj->InitDirection(CamForward);
+
+	
+	if (Proj->ProjectileMovement)
+	{
+		const float S = Proj->ProjectileMovement->InitialSpeed;
+		Proj->ProjectileMovement->Velocity = CamForward * S;
+	}
 }

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+
 #include "HitDamageable.h" // 데미지 인터페이스
 #include "HERO_Character.generated.h"
 
@@ -38,6 +39,7 @@ class UCharacterMovementComponent;
 class UDecalComponent;
 class UMaterialInterface;
 class UCombatComponent;
+class AFixedDamageProjectile;
 
 UCLASS()
 class TEAM13_PROJECT_API AHERO_Character : public ACharacter, public IHitDamageable
@@ -109,6 +111,9 @@ public:
     // 스킬2 입력 액션 추가
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* IA_HERO_MeteorStrike;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* IA_HERO_Throw;
 
     // 이동 스탯
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement Stats")
@@ -279,6 +284,19 @@ public:
     virtual bool  IsDead() const override { return HP <= 0.f; }
     virtual void  OnDead() override { OnHeroDeath.Broadcast(); }
     virtual void  EnableRagdollAndImpulse(const FVector& Impulse) override;
+
+
+    
+
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Projectile")
+    TSubclassOf<AFixedDamageProjectile> ProjectileClass_Player;
+
+   
+
+    UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
+    void FireProjectile();
+
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
     UCombatComponent* CombatComp;
