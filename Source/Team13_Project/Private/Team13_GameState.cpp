@@ -213,6 +213,12 @@ void ATeam13_GameState::UpdateHUD()
 							{
 								LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level : %d"), HeroCharacter->Level)));
 							}
+
+							//EXP text
+							if (UTextBlock* EXPText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName("ExpText")))
+							{
+								EXPText->SetText(FText::FromString(FString::Printf(TEXT("%0.f / %0.f"), HeroCharacter->EXP, HeroCharacter->MAX_EXP)));
+							}
 						}
 					}
 				}
