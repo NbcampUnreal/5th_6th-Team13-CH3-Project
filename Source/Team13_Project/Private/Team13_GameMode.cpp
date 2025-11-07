@@ -15,6 +15,7 @@ ATeam13_GameMode::ATeam13_GameMode()
 {
 	GameStateClass = ATeam13_GameState::StaticClass();
 	PlayerControllerClass = ATeam13_PlayerController::StaticClass();
+	
 }
 
 void ATeam13_GameMode::MonsterKilled(ABaseMonsterCharacter* KilledMonster, int32 exp)
@@ -25,20 +26,22 @@ void ATeam13_GameMode::MonsterKilled(ABaseMonsterCharacter* KilledMonster, int32
 		if (GameInstance)
 		{
 			GameInstance->AddToKill();
-			//GameInstance->AddToScore(exp);
+			GameInstance->AddScore(exp);
 		}
 		AHERO_Character* player = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 		if (player)
 		{
 			//플레이어 경험치 증가 함수
-			//player->addexp(exp);
+			player->AddExp(exp);
+			UE_LOG(LogTemp, Display, TEXT("[Game Mode] Player exp: %f"),player->EXP);
 		}
 	}
+	
 }
 
 void ATeam13_GameMode::PlayerLevelUp()
 {
-	/*AHERO_Character* player = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	AHERO_Character* player = Cast<AHERO_Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (!player)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[GameMode]PlayerLevelUp: Player nullptr"));
@@ -49,15 +52,22 @@ void ATeam13_GameMode::PlayerLevelUp()
 	{
 		UE_LOG(LogTemp, Error, TEXT("[GameMode]PlayerLevelUp: GameInstance nullptr"));
 		return;
-	}*/
+	}
 
-	//need GameInstance->MaxLv 
-	/*if (player->GetLevel() >= GameInstance->MaxLv)
+	//game complete check
+	/*if (player->GetLevel() >= GameInstance->MaxLevels[GameInstance->CurrentStageIndex])
 	{
 		ATeam13_GameState* GameState = GetGameState<ATeam13_GameState>();
 		if (GameState)
 		{
-			GameState->EndStage();
+			if (IsCompleteGame())
+			{
+				// ending scene
+			}else
+			{
+				GameState->EndStage();
+			}
+			
 		}
 	}*/
 }
@@ -78,7 +88,8 @@ bool ATeam13_GameMode::IsCompleteGame()
 	}
 
 	//clear conditions
-	/*if (player->GetLevel() >= GameInstance->MaxLv && GameInstance->CurrentStageIndex >= GameInstance->MaxStageIndex)
+	/*if (player->GetLevel() >= GameInstance->MaxLevels[GameInstance->CurrentStageIndex]
+	 *&& GameInstance->CurrentStageIndex >= GameInstance->MaxStageIndex)
 	{
 		return true;
 	}*/
