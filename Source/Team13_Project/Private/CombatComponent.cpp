@@ -245,7 +245,7 @@ void UCombatComponent::ApplyCollisionFeedbackForDefender(const TScriptInterface<
 {
 
 
-    if (!Defender || !Attacker || Defender->IsDead())
+    if (!Defender || !Attacker)
         return;
 
    
@@ -288,42 +288,51 @@ void UCombatComponent::ApplyCollisionFeedbackForDefender(const TScriptInterface<
             FTimerHandle Th; W->GetTimerManager().SetTimer(Th, [W]() { UGameplayStatics::SetGlobalTimeDilation(W, 1.f); }, Feedback.HitStopDuration, false);
         }
     }
+    const bool bDefenderDead = Defender->IsDead();
+    const FVector Dir = MakeBounceDirFromAttacker(Attacker, Feedback.UpRatioForDir);
 
-    if (ACharacter* DC = Cast<ACharacter>(Def))
+   
+    if (!bDefenderDead)
     {
-        const FVector Dir = MakeBounceDirFromAttacker(Attacker, Feedback.UpRatioForDir);
-
-        const FVector Launch = FVector(Dir.X, Dir.Y, 0).GetSafeNormal() * (Impact * Feedback.KnockbackScalarXY) + FVector(0, 0, Impact * Feedback.KnockbackScalarZ);
-
-        DC->LaunchCharacter(Launch, true, true);
-
-        if (UCharacterMovementComponent* M = DC->GetCharacterMovement())
+        if (ACharacter* DC = Cast<ACharacter>(Def))
         {
-            const float OldF = M->GroundFriction, OldB = M->BrakingDecelerationWalking;
+            const FVector Launch =
+                FVector(Dir.X, Dir.Y, 0).GetSafeNormal() * (Impact * Feedback.KnockbackScalarXY) +
+                FVector(0, 0, Impact * Feedback.KnockbackScalarZ);
 
-            M->GroundFriction = Feedback.TempGroundFriction;
+            DC->LaunchCharacter(Launch, /*bXYOverride=*/true, /*bZOverride=*/true);
 
-            M->BrakingDecelerationWalking = Feedback.TempBrakingDecel;
+            if (UCharacterMovementComponent* M = DC->GetCharacterMovement())
+            {
+                const float OldF = M->GroundFriction;
+                const float OldB = M->BrakingDecelerationWalking;
 
-            FTimerHandle Reset; DC->GetWorldTimerManager().SetTimer(Reset, [DC, OldF, OldB]()
-                {
-                    if (UCharacterMovementComponent* MM = DC->GetCharacterMovement())
+                M->GroundFriction = Feedback.TempGroundFriction;
+                M->BrakingDecelerationWalking = Feedback.TempBrakingDecel;
+
+                FTimerHandle Reset;
+                DC->GetWorldTimerManager().SetTimer(
+                    Reset,
+                    [DC, OldF, OldB]()
                     {
-                        MM->GroundFriction = OldF; MM->BrakingDecelerationWalking = OldB;
-                    }
-                }, Feedback.TempResetDelay, false);
+                        if (UCharacterMovementComponent* MM = DC->GetCharacterMovement())
+                        {
+                            MM->GroundFriction = OldF;
+                            MM->BrakingDecelerationWalking = OldB;
+                        }
+                    },
+                    Feedback.TempResetDelay,
+                    false
+                );
+            }
         }
-        // 넉백 계산 및 LaunchCharacter 적용된 뒤:
-        PlayHitEffects(Def, Impact, Hit.ImpactPoint, Dir);
-
-        OnFeedbackPlayed.Broadcast(Impact, Dir, Hit.ImpactPoint);
-        
-
-       
     }
 
     
+    PlayHitEffects(Def, Impact, Hit.ImpactPoint, Dir);
 
+   
+    OnFeedbackPlayed.Broadcast(Impact, Dir, Hit.ImpactPoint);
 }
 
 void UCombatComponent::ForEachPrimitive(AActor* Target, TFunctionRef<void(UPrimitiveComponent*)> Fn)

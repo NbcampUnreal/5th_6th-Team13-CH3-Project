@@ -616,6 +616,9 @@ void AHERO_Character::Input_MeteorStrike(const FInputActionValue& /*Value*/)
 		CommitMeteorStrike();
 		return;
 	}
+
+	
+
 }
 
 void AHERO_Character::BeginMeteorAscend()
@@ -637,6 +640,13 @@ void AHERO_Character::BeginMeteorAscend()
 
 	if (MeteorCursorDecal)
 		MeteorCursorDecal->SetHiddenInGame(true);
+
+	// 메테오 쿨타임 시작
+	if (bCanMeteor)
+	{
+		bCanMeteor = false;
+		GetWorldTimerManager().SetTimer(MeteorCooldownTimer, this, &AHERO_Character::ResetMeteor, MeteorCooldown, false);
+	}
 }
 
 void AHERO_Character::TickMeteor(float DeltaSeconds)
@@ -785,12 +795,7 @@ void AHERO_Character::Landed(const FHitResult& Hit)
 			}
 		}
 
-		// 메테오 쿨타임 시작
-		if (bCanMeteor)
-		{
-			bCanMeteor = false;
-			GetWorldTimerManager().SetTimer(MeteorCooldownTimer, this, &AHERO_Character::ResetMeteor, MeteorCooldown, false);
-		}
+		
 	}
 }
 
