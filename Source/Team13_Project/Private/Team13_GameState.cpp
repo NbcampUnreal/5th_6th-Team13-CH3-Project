@@ -199,13 +199,13 @@ void ATeam13_GameState::UpdateHUD()
 							//Speed Text
 							if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("SpeedText"))))
 							{
-								LevelText->SetText(FText::FromString(FString::Printf(TEXT("%0.f"), HeroCharacter->CURRENT_V)));
+								LevelText->SetText(FText::FromString(FString::Printf(TEXT("%0.f"), HeroCharacter->GetCurrentSpeed())));
 							}
 
 							//HP Text
 							if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("HPText"))))
 							{
-								ExpText->SetText(FText::FromString(FString::Printf(TEXT("%0.f"), HeroCharacter->HP)));
+								ExpText->SetText(FText::FromString(FString::Printf(TEXT("%0.f"), HeroCharacter->GetCurrentHealth())));
 							}
 
 							//PlayerLevel Text

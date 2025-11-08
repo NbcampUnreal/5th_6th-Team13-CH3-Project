@@ -15,6 +15,7 @@
 #include "CombatFeedbackSettings.h"
 #include "Components/MeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "HERO_Character.h"
 #include "Engine/World.h"
 
 
@@ -31,50 +32,56 @@ static void OrderPair(FRoleDecision& Out,
 }
 FRoleDecision UCombatComponent::DecideRoles(const TScriptInterface<IHitDamageable>& A, const TScriptInterface<IHitDamageable>& B, bool bIgnoreLevel) const
 {
-    FRoleDecision R; if (!A || !B || A->IsDead() || B->IsDead()) return R;
+    FRoleDecision R;
+    if (!A || !B || A->IsDead() || B->IsDead()) return R;
 
-    auto SpeedThenSize = [&]() -> int
-        {
-            const float SA = A->GetCurrentSpeed(), SB = B->GetCurrentSpeed();
-
-            if (!FMath::IsNearlyEqual(SA, SB)) 
-                return (SA > SB) ? 0 : 1;
-
-
-            const float SZA = A->GetSizeScale(), SZB = B->GetSizeScale();
-
-
-            if (!FMath::IsNearlyEqual(SZA, SZB)) 
-                return (SZA > SZB) ? 0 : 1;
-
-
-            return (A.GetObject() < B.GetObject()) ? 0 : 1;
-
-        };
-
-    if (!bIgnoreLevel)
+    const int32 LA = A->GetLevel(), LB = B->GetLevel();
+    if (LA != LB)
     {
-        const int32 LA = A->GetLevel(), LB = B->GetLevel();
-        if (LA != LB)
-        {
-            if (LA > LB)
-            {
-                OrderPair(R, A, B, TEXT("Level priority"));
-            }
-            else
-            {
-                OrderPair(R, B, A, TEXT("Level priority"));
-            }
-            return R;
-        }
+        // 레벨 우선
+        (LA > LB) ? OrderPair(R, A, B, TEXT("Level priority"))
+            : OrderPair(R, B, A, TEXT("Level priority"));
+        return R;
     }
-    const int Pick = SpeedThenSize();
 
-    if (Pick == 0)
-        OrderPair(R, A, B, TEXT("Speed/Size tiebreak"));
-    else           
-        OrderPair(R, B, A, TEXT("Speed/Size tiebreak"));
+    // 동레벨: 닫히는 속도
+    const AActor* AA = Cast<AActor>(A.GetObject());
+    const AActor* BB = Cast<AActor>(B.GetObject());
+    if (!AA || !BB) { OrderPair(R, A, B, TEXT("Fallback")); return R; }
 
+    const FVector PA = AA->GetActorLocation();
+    const FVector PB = BB->GetActorLocation();
+
+    FVector n = (PB - PA).GetSafeNormal();
+    if (n.IsNearlyZero())
+    {
+        const FVector Vrel = BB->GetVelocity() - AA->GetVelocity();
+        n = Vrel.IsNearlyZero() ? FVector::ForwardVector : Vrel.GetSafeNormal();
+    }
+
+    const float closingA = FVector::DotProduct(AA->GetVelocity(), n);
+    const float closingB = FVector::DotProduct(BB->GetVelocity(), -n);
+
+    if (!FMath::IsNearlyEqual(closingA, closingB, 1e-2f))
+    {
+        (closingA > closingB) ? OrderPair(R, A, B, TEXT("ClosingVelocity"))
+            : OrderPair(R, B, A, TEXT("ClosingVelocity"));
+        return R;
+    }
+
+    // 타이브레이커 1: 현재속도
+    const float spA = A->GetCurrentSpeed();
+    const float spB = B->GetCurrentSpeed();
+    if (!FMath::IsNearlyEqual(spA, spB, 1e-2f))
+    {
+        (spA >= spB) ? OrderPair(R, A, B, TEXT("Speed tiebreak"))
+            : OrderPair(R, B, A, TEXT("Speed tiebreak"));
+        return R;
+    }
+
+    // 타이브레이커 2: 포인터 주소(결정적 순서 보장)
+    (A.GetObject() >= B.GetObject()) ? OrderPair(R, A, B, TEXT("Ptr tiebreak"))
+        : OrderPair(R, B, A, TEXT("Ptr tiebreak"));
     return R;
 }
 float UCombatComponent::ComputeImpactDamage(const TScriptInterface<IHitDamageable>& Attacker, const TScriptInterface<IHitDamageable>& Defender) const
@@ -131,26 +138,35 @@ void UCombatComponent::ApplyImpactDamage(const TScriptInterface<IHitDamageable>&
         return;
 
     AActor* DefenderActor = Cast<AActor>(Defender.GetObject());
-
-
     if (IsInvincible(DefenderActor))
         return;
 
+    if (Attacker->GetLevel() == Defender->GetLevel())
+    {
+        constexpr float Eps = 1e-2f; // 동속 오차 허용치
+        const float SpA = Attacker->GetCurrentSpeed();
+        const float SpD = Defender->GetCurrentSpeed();
 
+        
+        if (SpD > SpA + Eps)
+        {
+            return; 
+        }
+    }
+    StartInvincibility(DefenderActor);
 
+    float Dmg = FMath::Max(ComputeImpactDamage(Attacker, Defender), 0.f);
+    const bool bDefenderIsHero = (DefenderActor && DefenderActor->IsA(AHERO_Character::StaticClass()));
+    if (bDefenderIsHero && Attacker->GetLevel() == Defender->GetLevel())
+    {
+        Dmg *= 0.2f;
+    }
 
-    const float Dmg = FMath::Max(ComputeImpactDamage(Attacker, Defender), 0.f);
     const float NewHP = FMath::Max(Defender->GetCurrentHealth() - Dmg, 0.f);
     Defender->SetCurrentHealth(NewHP);
 
-
-    
-
     if (NewHP <= 0.f)
     {
-
-        
-
         Defender->OnDead();
         const FVector Impulse = ImpactDirection.GetSafeNormal() * Settings.RagdollImpulseScale * FMath::Max(1.f, Attacker->GetSizeScale());
         Defender->EnableRagdollAndImpulse(Impulse);
@@ -163,19 +179,20 @@ void UCombatComponent::ApplyFixedDamage(const TScriptInterface<IHitDamageable>& 
 {
     if (!Target || Target->IsDead())
         return;
-    
+
     AActor* TargetActor = Cast<AActor>(Target.GetObject());
     if (IsInvincible(TargetActor))
         return;
-    const float NewHP = FMath::Max(Target->GetCurrentHealth() - FMath::Max(Damage, 0.f), 0.f);
 
-    Target->SetCurrentHealth(NewHP);
     
+    StartInvincibility(TargetActor);
+
+    const float NewHP = FMath::Max(Target->GetCurrentHealth() - FMath::Max(Damage, 0.f), 0.f);
+    Target->SetCurrentHealth(NewHP);
+
     if (NewHP <= 0.f)
     {
         Target->OnDead();
-        const FVector Impulse = HitImpulseDir.GetSafeNormal() * Settings.RagdollImpulseScale;
-            
         Target->EnableRagdollAndImpulse(HitImpulseDir.GetSafeNormal() * Settings.RagdollImpulseScale);
     }
 }
@@ -228,15 +245,14 @@ void UCombatComponent::ApplyCollisionFeedbackForDefender(const TScriptInterface<
 {
 
 
-    if (!Defender || !Attacker || Defender->IsDead())
+    if (!Defender || !Attacker)
         return;
 
    
 
     AActor* Def = Cast<AActor>(Defender.GetObject()); 
-    if (IsInvincible(Def)) return;
-
-    StartInvincibility(Def);
+    
+    
     if (!Def)
         return;
 
@@ -272,42 +288,51 @@ void UCombatComponent::ApplyCollisionFeedbackForDefender(const TScriptInterface<
             FTimerHandle Th; W->GetTimerManager().SetTimer(Th, [W]() { UGameplayStatics::SetGlobalTimeDilation(W, 1.f); }, Feedback.HitStopDuration, false);
         }
     }
+    const bool bDefenderDead = Defender->IsDead();
+    const FVector Dir = MakeBounceDirFromAttacker(Attacker, Feedback.UpRatioForDir);
 
-    if (ACharacter* DC = Cast<ACharacter>(Def))
+   
+    if (!bDefenderDead)
     {
-        const FVector Dir = MakeBounceDirFromAttacker(Attacker, Feedback.UpRatioForDir);
-
-        const FVector Launch = FVector(Dir.X, Dir.Y, 0).GetSafeNormal() * (Impact * Feedback.KnockbackScalarXY) + FVector(0, 0, Impact * Feedback.KnockbackScalarZ);
-
-        DC->LaunchCharacter(Launch, true, true);
-
-        if (UCharacterMovementComponent* M = DC->GetCharacterMovement())
+        if (ACharacter* DC = Cast<ACharacter>(Def))
         {
-            const float OldF = M->GroundFriction, OldB = M->BrakingDecelerationWalking;
+            const FVector Launch =
+                FVector(Dir.X, Dir.Y, 0).GetSafeNormal() * (Impact * Feedback.KnockbackScalarXY) +
+                FVector(0, 0, Impact * Feedback.KnockbackScalarZ);
 
-            M->GroundFriction = Feedback.TempGroundFriction;
+            DC->LaunchCharacter(Launch, /*bXYOverride=*/true, /*bZOverride=*/true);
 
-            M->BrakingDecelerationWalking = Feedback.TempBrakingDecel;
+            if (UCharacterMovementComponent* M = DC->GetCharacterMovement())
+            {
+                const float OldF = M->GroundFriction;
+                const float OldB = M->BrakingDecelerationWalking;
 
-            FTimerHandle Reset; DC->GetWorldTimerManager().SetTimer(Reset, [DC, OldF, OldB]()
-                {
-                    if (UCharacterMovementComponent* MM = DC->GetCharacterMovement())
+                M->GroundFriction = Feedback.TempGroundFriction;
+                M->BrakingDecelerationWalking = Feedback.TempBrakingDecel;
+
+                FTimerHandle Reset;
+                DC->GetWorldTimerManager().SetTimer(
+                    Reset,
+                    [DC, OldF, OldB]()
                     {
-                        MM->GroundFriction = OldF; MM->BrakingDecelerationWalking = OldB;
-                    }
-                }, Feedback.TempResetDelay, false);
+                        if (UCharacterMovementComponent* MM = DC->GetCharacterMovement())
+                        {
+                            MM->GroundFriction = OldF;
+                            MM->BrakingDecelerationWalking = OldB;
+                        }
+                    },
+                    Feedback.TempResetDelay,
+                    false
+                );
+            }
         }
-        // 넉백 계산 및 LaunchCharacter 적용된 뒤:
-        PlayHitEffects(Def, Impact, Hit.ImpactPoint, Dir);
-
-        OnFeedbackPlayed.Broadcast(Impact, Dir, Hit.ImpactPoint);
-        
-
-       
     }
 
     
+    PlayHitEffects(Def, Impact, Hit.ImpactPoint, Dir);
 
+   
+    OnFeedbackPlayed.Broadcast(Impact, Dir, Hit.ImpactPoint);
 }
 
 void UCombatComponent::ForEachPrimitive(AActor* Target, TFunctionRef<void(UPrimitiveComponent*)> Fn)

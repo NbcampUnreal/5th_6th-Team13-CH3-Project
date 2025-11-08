@@ -20,3 +20,10 @@ void UTeam13_GameInstance::AddToKill()
 {
 	++CurrentKill;
 }
+
+//Instance 내용 초기화
+void UTeam13_GameInstance::clear()
+{
+	CurrentKill = 0;
+	Score = 0;
+}

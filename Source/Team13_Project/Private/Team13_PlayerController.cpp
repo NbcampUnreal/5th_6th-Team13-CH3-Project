@@ -58,7 +58,13 @@ void ATeam13_PlayerController::BeginPlay()
 void ATeam13_PlayerController::ShowStartMenu()
 {
 	WidgetRemove();
-
+	
+	//Instance 내용 초기화
+	if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
+	{
+		GameInstance->clear();
+	}
+	
 	//메인메뉴 생성
 	if (MainMenuWidgetClass)
 	{

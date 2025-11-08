@@ -27,4 +27,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameData")
 	void AddToKill();
 
+	
+	void clear();
 };

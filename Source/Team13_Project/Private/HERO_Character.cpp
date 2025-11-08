@@ -17,7 +17,7 @@
 
 #include "Components/DecalComponent.h"
 #include "DrawDebugHelpers.h"
-
+#include "MeteorAOE.h"
 
 #include "Animation/AnimInstance.h"   // [추가] 몽타주 재생/정지
 #include "Animation/AnimMontage.h"    // [추가] UAnimMontage
@@ -615,6 +615,9 @@ void AHERO_Character::Input_MeteorStrike(const FInputActionValue& /*Value*/)
 		CommitMeteorStrike();
 		return;
 	}
+
+	
+
 }
 
 void AHERO_Character::BeginMeteorAscend()
@@ -640,6 +643,12 @@ void AHERO_Character::BeginMeteorAscend()
 	// [추가] 상승 모션 재생
 	PlayMontage(AM_Meteor_Ascend, 1.f);
 
+	// 메테오 쿨타임 시작
+	if (bCanMeteor)
+	{
+		bCanMeteor = false;
+		GetWorldTimerManager().SetTimer(MeteorCooldownTimer, this, &AHERO_Character::ResetMeteor, MeteorCooldown, false);
+	}
 }
 
 void AHERO_Character::TickMeteor(float DeltaSeconds)
@@ -787,19 +796,36 @@ void AHERO_Character::Landed(const FHitResult& Hit)
 		}
 
 		MeteorState = EMeteorState::None;
+		if (MeteorCursorDecal) MeteorCursorDecal->SetHiddenInGame(true);
 
-		if (MeteorCursorDecal)
-			MeteorCursorDecal->SetHiddenInGame(true);
-
-		if (MeteorAOESphereClass)
+		// AOE 스폰 + 즉사/피드백 처리
+		if (MeteorAOEClass)
 		{
 			FActorSpawnParameters SP;
-			AActor* AOE = GetWorld()->SpawnActor<AActor>(MeteorAOESphereClass, Hit.ImpactPoint, FRotator::ZeroRotator, SP);
-			if (AOE && MeteorAOESphereLifeSeconds > 0.f)
+			SP.Owner = this;
+			SP.Instigator = this;
+
+			AMeteorAOE* AOE = GetWorld()->SpawnActor<AMeteorAOE>(
+				MeteorAOEClass,
+				Hit.ImpactPoint,
+				FRotator::ZeroRotator,
+				SP
+			);
+
+			if (AOE)
 			{
-				AOE->SetLifeSpan(MeteorAOESphereLifeSeconds);
+				// 반경/지속시간 튜닝(원하면 에디터에서도 조정 가능)
+				AOE->Radius = 500.f; // 필요에 맞게 값 조정
+				AOE->LifeSeconds = 0.15f;
+
+				// Combat 주입 + 소유자 설정
+				AOE->SetSourceCombat(CombatComp);
+				AOE->SetOwnerActor(this);
+
+				AOE->Trigger();
 			}
-		}
+		}	
+
 	}
 }
 
