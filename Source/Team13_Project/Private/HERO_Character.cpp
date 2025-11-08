@@ -18,7 +18,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/DecalComponent.h"
 #include "DrawDebugHelpers.h"
-
+#include "MeteorAOE.h"
 
 AHERO_Character::AHERO_Character()
 {
@@ -680,7 +680,7 @@ void AHERO_Character::BeginMeteorAiming()
 	{
 		Move->GravityScale = 0.f;
 		Move->StopMovementImmediately();
-		Move->SetMovementMode(MOVE_Flying);   // ???? ??? ????,???????
+		Move->SetMovementMode(MOVE_Flying);   
 		Move->Velocity = FVector::ZeroVector;
 	}
 
@@ -755,21 +755,37 @@ void AHERO_Character::Landed(const FHitResult& Hit)
 	if (MeteorState == EMeteorState::Descending)
 	{
 		MeteorState = EMeteorState::None;
+		if (MeteorCursorDecal) MeteorCursorDecal->SetHiddenInGame(true);
 
-		if (MeteorCursorDecal)
-			MeteorCursorDecal->SetHiddenInGame(true);
-
-		if (MeteorAOESphereClass)
+		// AOE 스폰 + 즉사/피드백 처리
+		if (MeteorAOEClass)
 		{
 			FActorSpawnParameters SP;
-			AActor* AOE = GetWorld()->SpawnActor<AActor>(MeteorAOESphereClass, Hit.ImpactPoint, FRotator::ZeroRotator, SP);
-			if (AOE && MeteorAOESphereLifeSeconds > 0.f)
+			SP.Owner = this;
+			SP.Instigator = this;
+
+			AMeteorAOE* AOE = GetWorld()->SpawnActor<AMeteorAOE>(
+				MeteorAOEClass,
+				Hit.ImpactPoint,
+				FRotator::ZeroRotator,
+				SP
+			);
+
+			if (AOE)
 			{
-				AOE->SetLifeSpan(MeteorAOESphereLifeSeconds);
+				// 반경/지속시간 튜닝(원하면 에디터에서도 조정 가능)
+				AOE->Radius = 500.f; // 필요에 맞게 값 조정
+				AOE->LifeSeconds = 0.15f;
+
+				// Combat 주입 + 소유자 설정
+				AOE->SetSourceCombat(CombatComp);
+				AOE->SetOwnerActor(this);
+
+				AOE->Trigger();
 			}
 		}
 
-		// 여기서 메테오 쿨타임 시작
+		// 메테오 쿨타임 시작
 		if (bCanMeteor)
 		{
 			bCanMeteor = false;
