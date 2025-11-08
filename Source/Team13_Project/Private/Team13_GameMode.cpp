@@ -15,6 +15,8 @@ ATeam13_GameMode::ATeam13_GameMode()
 {
 	GameStateClass = ATeam13_GameState::StaticClass();
 	PlayerControllerClass = ATeam13_PlayerController::StaticClass();
+
+	poolinitalized_v = 50;
 	
 }
 
@@ -116,7 +118,7 @@ void ATeam13_GameMode::StartGameStage()
 		if (PoolManager)
 		{
 			UE_LOG(LogTemp, Display, TEXT("[Game Mode] Starting initialize pool"));
-			PoolManager->InitializePool(AAiTestMonster::StaticClass(), 10);
+			PoolManager->InitializePool(AAiTestMonster::StaticClass(), poolinitalized_v);
 		}
 	}
 }

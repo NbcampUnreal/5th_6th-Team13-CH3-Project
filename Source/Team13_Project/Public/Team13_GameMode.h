@@ -22,4 +22,7 @@ public:
 	void CompleteGame();
 	UFUNCTION(BlueprintCallable)
 	void StartGameStage();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pool")
+	int poolinitalized_v;
 };

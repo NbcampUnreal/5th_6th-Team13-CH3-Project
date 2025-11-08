@@ -24,6 +24,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GameData")
 	TArray<int32> MaxLevels;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameData")
+	int32 MaxStageIndex;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
 	bool bIsLose = true;
 

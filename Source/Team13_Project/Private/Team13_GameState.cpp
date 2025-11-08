@@ -12,9 +12,8 @@
 
 ATeam13_GameState::ATeam13_GameState()
 {
-	StageDuration = 100.f;
+	StageDuration = 10.f;
 	CurrentStageIndex = 0;
-	MaxStageIndex = 2;
 }
 
 void ATeam13_GameState::BeginPlay()
@@ -80,17 +79,6 @@ void ATeam13_GameState::StartStage()
 		GameMode->StartGameStage();
 	}
 
-
-
-	//if (UGameInstance* GameInstance = GetGameInstance())
-	//{
-	//	UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(GameInstance);
-	//	if (Team13_GameInstance)
-	//	{
-	//		CurrentStageIndex = Team13_GameInstance->CurrentStageIndex;
-	//	}
-	//}
-
 	FString CurrentMapName = GetWorld()->GetMapName();
 	if (!CurrentMapName.Contains("StartMenu"))
 	{
@@ -108,7 +96,7 @@ void ATeam13_GameState::StartStage()
 
 void ATeam13_GameState::OnStageTimeUp()
 {
-	EndStage();
+	OnGameOver();
 }
 
 //스테이지 종료
@@ -124,7 +112,7 @@ void ATeam13_GameState::EndStage()
 
 			Team13_GameInstance->CurrentStageIndex = CurrentStageIndex;
 
-			if (CurrentStageIndex >= MaxStageIndex)
+			if (CurrentStageIndex >= Team13_GameInstance->MaxStageIndex)
 			{
 				OnGameOver();
 				return;
@@ -136,7 +124,6 @@ void ATeam13_GameState::EndStage()
 				GetWorldTimerManager().SetTimer(TimerHandle, [this]() {
 					UGameplayStatics::OpenLevel(GetWorld(), StageMapNames[CurrentStageIndex]);
 					}, 1.0f, false);
-
 			}
 			else
 			{
@@ -185,10 +172,11 @@ void ATeam13_GameState::OnGameOver()
 
 						Team13_PlayerController->SetPause(true);
 
-						if (HERO_Character && HERO_Character->IsDead())
-							Team13_GameInstance->bIsLose = true;
-						else
+						if (HERO_Character->GetHeroLevel() >= Team13_GameInstance->MaxLevels[CurrentStageIndex] 
+							&& Team13_GameInstance->CurrentStageIndex == Team13_GameInstance->MaxStageIndex)
 							Team13_GameInstance->bIsLose = false;
+						else
+							Team13_GameInstance->bIsLose = true;
 
 						UGameplayStatics::OpenLevel(GetWorld(), FName("EndMenu"));
 					}
@@ -221,7 +209,7 @@ void ATeam13_GameState::UpdateHUD()
 						//Stage Text
 						if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("StageText"))))
 						{
-							ExpText->SetText(FText::FromString(FString::Printf(TEXT("Stagt\n%d"), CurrentStageIndex + 1)));
+							ExpText->SetText(FText::FromString(FString::Printf(TEXT("Stage\n%d"), CurrentStageIndex + 1)));
 						}
 
 						//Kill Text
@@ -238,19 +226,19 @@ void ATeam13_GameState::UpdateHUD()
 							//Speed Text
 							if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("SpeedText"))))
 							{
-								LevelText->SetText(FText::FromString(FString::Printf(TEXT("%0.f"), HeroCharacter->CURRENT_V)));
+								LevelText->SetText(FText::FromString(FString::Printf(TEXT("%0.f"), HeroCharacter->GetCurrentSpeed())));
 							}
 
 							//HP Text
 							if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("HPText"))))
 							{
-								ExpText->SetText(FText::FromString(FString::Printf(TEXT("%0.f"), HeroCharacter->HP)));
+								ExpText->SetText(FText::FromString(FString::Printf(TEXT("%0.f"), HeroCharacter->GetCurrentHealth())));
 							}
 
 							//PlayerLevel Text
 							if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("LevelText"))))
 							{
-								LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level\n%d"), HeroCharacter->Level)));
+								LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level\n%d"), HeroCharacter->GetHeroLevel())));
 							}
 
 							//EXP text
