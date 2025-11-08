@@ -40,6 +40,7 @@ class UDecalComponent;
 class UMaterialInterface;
 class UCombatComponent;
 class AFixedDamageProjectile;
+class AMeteorAOE;
 
 UCLASS()
 class TEAM13_PROJECT_API AHERO_Character : public ACharacter, public IHitDamageable
@@ -193,7 +194,7 @@ public:
 
     // 낙하 시 스폰할 구형 액터 클래스
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
-    TSubclassOf<AActor> MeteorAOESphereClass;
+    TSubclassOf<AMeteorAOE> MeteorAOEClass;
 
     // 메테오 파라미터
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill|Meteor")
