@@ -18,6 +18,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/DecalComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Team13_GameMode.h"
 #include "MeteorAOE.h"
 
 AHERO_Character::AHERO_Character()
@@ -381,6 +382,12 @@ void AHERO_Character::LevelUpInternal()
 
 	// 레벨업 알림 (틱 없음)
 	OnHeroLevelUp.Broadcast(OldLevel, Level);
+
+	ATeam13_GameMode* GameMode = GetWorld()->GetAuthGameMode<ATeam13_GameMode>();
+	if (GameMode)
+	{
+		GameMode->PlayerLevelUp();
+	}
 
 	// 레벨업 과정에서 HP가 실제로 변했으면 HP 변경 알림
 	if (!FMath::IsNearlyEqual(OldHP, HP))

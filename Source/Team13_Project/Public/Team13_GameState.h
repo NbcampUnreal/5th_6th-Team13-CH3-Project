@@ -30,12 +30,14 @@ public:
 
 	void StartStage();
 	void EndStage();
-
-	
+	UFUNCTION(BlueprintCallable, Category = "Stage")
+	void MainMenuStage();
+	void EndMenuStage();
 	UFUNCTION()
 	void OnGameOver();
 	void UpdateHUD();
 	void OnStageTimeUp();
 
 	float StageDuration;
+	bool bGameOverTriggered = false;
 };

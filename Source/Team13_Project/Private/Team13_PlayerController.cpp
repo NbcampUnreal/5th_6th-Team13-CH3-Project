@@ -59,14 +59,12 @@ void ATeam13_PlayerController::BeginPlay()
 void ATeam13_PlayerController::ShowStartMenu()
 {
 	WidgetRemove();
-	
-	//Instance 내용 초기화
+	//메인메뉴 생성
 	if (UTeam13_GameInstance* GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
 	{
 		GameInstance->clear();
 	}
-	
-	//메인메뉴 생성
+
 	if (MainMenuWidgetClass)
 	{
 		MainMenuWidgetInstance = CreateWidget<UUserWidget>(this, MainMenuWidgetClass);
@@ -231,11 +229,11 @@ void ATeam13_PlayerController::ShowGameHUD()
 			bShowMouseCursor = false;			//마우스 커서X
 			SetInputMode(FInputModeGameOnly());
 
-			ATeam13_GameState* GameState = GetWorld() ? GetWorld()->GetGameState<ATeam13_GameState>() : nullptr;
-			if (GameState)
-			{
-				GameState->UpdateHUD();
-			}
+			//ATeam13_GameState* GameState = GetWorld() ? GetWorld()->GetGameState<ATeam13_GameState>() : nullptr;
+			//if (GameState)
+			//{
+			//	GameState->UpdateHUD();
+			//}
 		}
 	}
 }
@@ -244,10 +242,10 @@ void ATeam13_PlayerController::ShowGameHUD()
 void ATeam13_PlayerController::StartGame()
 {
 
-	if (UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
-	{
-		Team13_GameInstance->CurrentStageIndex = 0;
-	}
+	//if (UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(UGameplayStatics::GetGameInstance(this)))
+	//{
+	//	Team13_GameInstance->CurrentStageIndex = 0;
+	//}
 
 	UGameplayStatics::OpenLevel(GetWorld(), FName("Team13_SH_Map"));
 	SetPause(false);

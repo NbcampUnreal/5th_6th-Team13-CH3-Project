@@ -21,6 +21,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
 	int32 Score;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GameData")
+	TArray<int32> MaxLevels;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameData")
+	bool bIsLose = true;
 
 	UFUNCTION(BlueprintCallable, Category = "GameData")
 	void AddScore(int32 Amount);

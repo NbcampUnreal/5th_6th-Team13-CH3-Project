@@ -285,14 +285,8 @@ public:
     virtual void  OnDead() override { OnHeroDeath.Broadcast(); }
     virtual void  EnableRagdollAndImpulse(const FVector& Impulse) override;
 
-
-    
-
-
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Projectile")
     TSubclassOf<AFixedDamageProjectile> ProjectileClass_Player;
-
-   
 
     UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
     void FireProjectile();
@@ -309,8 +303,6 @@ public:
 
     // 쿨타임 중인지 여부
     bool bCanFire = true;
-
-   
 
     // 쿨타임 리셋
     void ResetFire();
@@ -333,7 +325,5 @@ public:
 
     FTimerHandle MeteorCooldownTimer;
     void ResetMeteor(); // 메테오 쿨타임 해제
-
-
 
 };

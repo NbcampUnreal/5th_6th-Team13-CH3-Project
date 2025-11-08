@@ -55,21 +55,22 @@ void ATeam13_GameMode::PlayerLevelUp()
 	}
 
 	//game complete check
-	/*if (player->GetLevel() >= GameInstance->MaxLevels[GameInstance->CurrentStageIndex])
+	if (player->GetLevel() >= GameInstance->MaxLevels[GameInstance->CurrentStageIndex])
 	{
-		ATeam13_GameState* GameState = GetGameState<ATeam13_GameState>();
-		if (GameState)
+		ATeam13_GameState* gamestate = GetGameState<ATeam13_GameState>();
+		if (gamestate)
 		{
 			if (IsCompleteGame())
 			{
-				// ending scene
-			}else
-			{
-				GameState->EndStage();
+				gamestate->OnGameOver();
 			}
-			
+			else
+			{
+				gamestate->EndStage();
+			}
+
 		}
-	}*/
+	}
 }
 
 bool ATeam13_GameMode::IsCompleteGame()
