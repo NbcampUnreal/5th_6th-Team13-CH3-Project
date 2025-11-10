@@ -23,4 +23,5 @@ void UTeam13_GameInstance::clear()
 {
 	CurrentKill = 0;
 	Score = 0;
+	CurrentStageIndex = 0;
 }
