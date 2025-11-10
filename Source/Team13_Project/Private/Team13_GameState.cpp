@@ -12,7 +12,7 @@
 
 ATeam13_GameState::ATeam13_GameState()
 {
-	StageDuration = 10.f;
+	StageDuration = 999.f;
 	CurrentStageIndex = 0;
 }
 
@@ -58,9 +58,15 @@ void ATeam13_GameState::BeginPlay()
 void ATeam13_GameState::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-
-	if (CurrentStageIndex == 0) {
-		MainMenuStage();
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(GameInstance);
+		if (Team13_GameInstance)
+		{
+			if (Team13_GameInstance->CurrentStageIndex == 0) {
+				MainMenuStage();
+			}
+		}
 	}
 }
 
@@ -90,8 +96,6 @@ void ATeam13_GameState::StartStage()
 			false);
 	}
 
-	CurrentStageIndex++;
-
 }
 
 void ATeam13_GameState::OnStageTimeUp()
@@ -109,16 +113,15 @@ void ATeam13_GameState::EndStage()
 		UTeam13_GameInstance* Team13_GameInstance = Cast<UTeam13_GameInstance>(GameInstance);
 		if (Team13_GameInstance)
 		{
+			++Team13_GameInstance->CurrentStageIndex;
+			CurrentStageIndex = Team13_GameInstance->CurrentStageIndex;
+			//if (CurrentStageIndex >= Team13_GameInstance->MaxStageIndex)
+			//{
+			//	OnGameOver();
+			//	return;
+			//}
 
-			Team13_GameInstance->CurrentStageIndex = CurrentStageIndex;
-
-			if (CurrentStageIndex >= Team13_GameInstance->MaxStageIndex)
-			{
-				OnGameOver();
-				return;
-			}
-
-			if (StageMapNames.IsValidIndex(CurrentStageIndex))
+			if (StageMapNames.IsValidIndex(Team13_GameInstance->CurrentStageIndex))
 			{
 				FTimerHandle TimerHandle;
 				GetWorldTimerManager().SetTimer(TimerHandle, [this]() {
@@ -172,8 +175,7 @@ void ATeam13_GameState::OnGameOver()
 
 						Team13_PlayerController->SetPause(true);
 
-						if (HERO_Character->GetHeroLevel() >= Team13_GameInstance->MaxLevels[CurrentStageIndex] 
-							&& Team13_GameInstance->CurrentStageIndex == Team13_GameInstance->MaxStageIndex)
+						if (HERO_Character->GetHeroLevel() >= Team13_GameInstance->MaxLevels[CurrentStageIndex] )
 							Team13_GameInstance->bIsLose = false;
 						else
 							Team13_GameInstance->bIsLose = true;
@@ -209,7 +211,7 @@ void ATeam13_GameState::UpdateHUD()
 						//Stage Text
 						if (UTextBlock* ExpText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("StageText"))))
 						{
-							ExpText->SetText(FText::FromString(FString::Printf(TEXT("Stage\n%d"), CurrentStageIndex + 1)));
+							ExpText->SetText(FText::FromString(FString::Printf(TEXT("Stage\n%d"), Team13_GameInstance->CurrentStageIndex + 1)));
 						}
 
 						//Kill Text

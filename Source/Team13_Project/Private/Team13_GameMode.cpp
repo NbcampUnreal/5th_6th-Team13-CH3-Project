@@ -91,11 +91,12 @@ bool ATeam13_GameMode::IsCompleteGame()
 	}
 
 	//clear conditions
-	/*if (player->GetLevel() >= GameInstance->MaxLevels[GameInstance->CurrentStageIndex]
-	 *&& GameInstance->CurrentStageIndex >= GameInstance->MaxStageIndex)
+	if ((player->GetLevel() < GameInstance->MaxLevels[GameInstance->CurrentStageIndex]
+	 && GameInstance->CurrentStageIndex >= GameInstance->MaxStageIndex )|| player->GetCurrentHealth() <= 0)
 	{
 		return true;
-	}*/
+	}
+
 	return false;
 }
 
